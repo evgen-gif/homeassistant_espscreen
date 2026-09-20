@@ -421,7 +421,9 @@ text_sensor:
   - platform: template
     name: "Guition screen type"
     entity_category: diagnostic
-    update_interval: never
+    # Every minute like "Screen firmware": with `never` the value stayed unknown and the app took the screen for the
+    # 4-inch Guition (its sizes, its camera boxes). The app reads this value, not just the sensor's presence.
+    update_interval: 60s
     lambda: 'return {"panel7"};'
 
 # Rotation as a Home Assistant choice (firmware 0.2.49+). Only the Guition turns; the CYD keeps its orientation.
