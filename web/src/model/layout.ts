@@ -177,7 +177,7 @@ export function tileLimit(firmware: string | undefined | null) {
   return versionAtLeast(firmware, "0.2.62") ? MAX_TILES : versionAtLeast(firmware, "0.2.7") ? 20 : 10;
 }
 // What a tile shows and how big it is, in a few words (editor.displays, editor.sizes); a key it doesn't know stays as it is.
-export const DISPLAYS = ["standard", "watch", "forecast", "graph", "digital", "analog", "sunpath"];
+export const DISPLAYS = ["standard", "watch", "forecast", "clock_weather", "graph", "digital", "analog", "sunpath"];
 export const displayName = (display: string) => (DISPLAYS.includes(display) ? t(`editor.displays.${display}`) : display);
 export const sizeName = (size: string | undefined) => t(`editor.sizes.${SIZES.includes(size as Size) ? size : "single"}`);
 export const TOGGLE_BEFORE = ["light", "switch", "input_boolean", "fan", "media_player", "climate"];

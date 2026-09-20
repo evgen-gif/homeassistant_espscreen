@@ -2614,18 +2614,39 @@ inline void render_clock(Widgets &w,const Tile &t,bool large,int width,int heigh
 inline int block_min(int icon_h,int temp_h,int text_h){return std::max(icon_h,temp_h)+2+text_h;}
 // Current conditions on the left, five day columns on the right (wide cards only).
 inline void render_forecast(Widgets &w,const Tile &t,bool large,int width,int height) {
-  begin_extra(w,"forecast",width,height);
+  // "Clock & weather" (SDS, 2026-09-20): the same card with the time and the date in a block at the left, the weather
+  // moved right by it. Parts 30 and 31 hold the time and the date, so a full page keeps four hour columns (18..29).
+  const bool with_clock=t.display=="clock_weather";
+  begin_extra(w,with_clock?"clockcast":"forecast",width,height);
   const lv_font_t *title_font=lv_obj_get_style_text_font(w.title,LV_PART_MAIN);
   const lv_font_t *temp_font=watch_value_font?watch_value_font:w.value_font,*day_icon=mini_icon_font?mini_icon_font:w.icon_font;
   int left=large?150:96,icon_h=lv_font_get_line_height(w.icon_font),temp_h=lv_font_get_line_height(temp_font),text_h=lv_font_get_line_height(w.value_font);
   // A full-page card (firmware 0.2.62+) adds the next hours under the days: time, icon and temperature per column.
   int day_h=lv_font_get_line_height(title_font),icon_col=lv_font_get_line_height(day_icon);
-  unsigned hours=w.full?std::min<size_t>(t.extra().hours.size(),large?6:4):0;
+  const unsigned hour_slots=with_clock?4:6;
+  unsigned hours=w.full?std::min<size_t>(t.extra().hours.size(),large?hour_slots:4):0;
   int hours_h=hours?day_h+icon_col+text_h:0;
   int top_h=hours?std::max(block_min(icon_h,temp_h,text_h),height-hours_h-(large?12:6)):height;
-  for(unsigned j=0;j<6;++j){
+  for(unsigned j=0;j<hour_slots;++j){
     if(j<hours)continue;
     for(unsigned k=18+3*j;k<21+3*j;++k)if(w.parts[k])lv_obj_add_flag(w.parts[k],LV_OBJ_FLAG_HIDDEN);
+  }
+  int clock_w=0;
+  if(with_clock){
+    // The time in the clock digits font, the date beneath in the card's small font, both centred in their block; the
+    // block is as wide as the widest time ("12:59 PM" on a 12-hour clock) plus a gap.
+    const lv_font_t *big=clock_font?clock_font:temp_font;
+    auto now=now_time?now_time():esphome::ESPTime{};
+    const bool h12=screen_settings::current.clock_24h==0;
+    const char *widest=h12?"12:59 PM":"22:59";
+    lv_point_t widest_size;lv_text_get_size(&widest_size,widest,big,0,0,LV_COORD_MAX,LV_TEXT_FLAG_NONE);
+    clock_w=widest_size.x+(large?28:12);
+    int big_h=lv_font_get_line_height(big),small_h=day_h;
+    int clock_h=big_h+2+small_h,cy=std::max(0,(top_h-clock_h)/2);
+    part_label(w,30,big,0,cy,clock_w-(large?28:12),LV_TEXT_ALIGN_CENTER,time_text(now));
+    part_label(w,31,title_font,0,cy+big_h+2,clock_w-(large?28:12),LV_TEXT_ALIGN_CENTER,date_text(now));
+  }else{
+    for(unsigned k=30;k<32;++k)if(w.parts[k])lv_obj_add_flag(w.parts[k],LV_OBJ_FLAG_HIDDEN);
   }
   if(hours){
     int column=width/hours,y0=height-hours_h;
@@ -2641,12 +2662,13 @@ inline void render_forecast(Widgets &w,const Tile &t,bool large,int width,int he
   height=top_h;
   int block=std::max(icon_h,temp_h)+2+text_h,y=std::max(0,(height-block)/2);
   char b[24];snprintf(b,sizeof(b),"%.0f°",t.current);
-  auto *icon=part_label(w,0,w.icon_font,0,y+(std::max(icon_h,temp_h)-icon_h)/2,icon_h+4,LV_TEXT_ALIGN_LEFT,t.available()?weather_icon(t.state):"\U000F0595");
+  auto *icon=part_label(w,0,w.icon_font,clock_w,y+(std::max(icon_h,temp_h)-icon_h)/2,icon_h+4,LV_TEXT_ALIGN_LEFT,t.available()?weather_icon(t.state):"\U000F0595");
   lv_obj_set_width(icon,lv_font_get_line_height(w.icon_font)+4);
-  part_label(w,1,temp_font,icon_h+6,y+(std::max(icon_h,temp_h)-temp_h)/2,left-icon_h-6,LV_TEXT_ALIGN_LEFT,std::isfinite(t.current)?b:"");
+  part_label(w,1,temp_font,clock_w+icon_h+6,y+(std::max(icon_h,temp_h)-temp_h)/2,left-icon_h-6,LV_TEXT_ALIGN_LEFT,std::isfinite(t.current)?b:"");
   // Home Assistant's word for the weather can be long ("częściowe zachmurzenie"): it ends in an ellipsis before the days.
-  auto *condition=part_label(w,2,w.value_font,0,y+std::max(icon_h,temp_h)+2,left-4,LV_TEXT_ALIGN_LEFT,weather_text(t.state));
+  auto *condition=part_label(w,2,w.value_font,clock_w,y+std::max(icon_h,temp_h)+2,left-4,LV_TEXT_ALIGN_LEFT,weather_text(t.state));
   if(lv_label_get_long_mode(condition)!=LV_LABEL_LONG_DOT)lv_label_set_long_mode(condition,LV_LABEL_LONG_DOT);
+  left+=clock_w;
   int column=(width-left)/5;
   for(unsigned k=0;k<5;++k){
     static const Forecast no_day;int x=left+k*column;bool has=k<t.extra().forecast.size();const auto &f=has?t.extra().forecast[k]:no_day;
@@ -3208,7 +3230,7 @@ inline void render_slot(size_t slot) {
   bool large_tile=tile_height(w)>80;
   lap(swipe_profile::TEXT);
   // Cards that replace the name/status layout entirely.
-  bool clock=t.is_clock(), forecast=d=="weather" && t.display=="forecast" && w.wide && t.extra().forecast.size()>0 && fresh() && t.available();
+  bool clock=t.is_clock(), forecast=d=="weather" && (t.display=="forecast" || t.display=="clock_weather") && w.wide && t.extra().forecast.size()>0 && fresh() && t.available();
   bool sunpath=d=="sun" && t.display=="sunpath" && w.wide && !t.extra().sunrise.empty() && !t.extra().sunset.empty() && fresh() && t.available();
   bool graph=d=="sensor" && t.display=="graph" && t.has_history && !clock;
   bool custom=clock||forecast||sunpath;
@@ -3356,7 +3378,7 @@ inline void render_slot(size_t slot) {
   // in the media colours, not the card's.
   for(unsigned i=0;i<w.parts.size() && w.extra_mode!="media";++i){
     auto *p=w.parts[i];if(!p)continue;
-    bool muted=w.extra_mode=="forecast" ? i>=2 && i%3==2 : w.extra_mode=="sunpath" ? i>=1 : w.extra_mode=="calendar" ? i==15||i==17 : i==16;
+    bool muted=w.extra_mode=="forecast" ? i>=2 && i%3==2 : w.extra_mode=="clockcast" ? (i>=2 && i<30 && i%3==2) || i==31 : w.extra_mode=="sunpath" ? i>=1 : w.extra_mode=="calendar" ? i==15||i==17 : i==16;
     if(lv_obj_check_type(p,&lv_label_class))set_color(p,LV_STYLE_TEXT_COLOR,muted?value_color:title_color);
     else if(w.extra_mode=="sunpath")continue;
     else if(lv_obj_check_type(p,&lv_line_class))set_color(p,LV_STYLE_LINE_COLOR,w.extra_mode=="graph"?color:i==18?lv_color_hex(theme::foreground(theme::ha::ALARM)):i<12?value_color:i==13?icon_color:title_color);
@@ -3998,7 +4020,7 @@ inline void tick() {
     for(size_t slot=0;slot<SLOTS_PER_PAGE;++slot){
       auto &w=widgets[slot];if(!w.tile || w.index>=model.count || lv_obj_has_flag(w.tile,LV_OBJ_FLAG_HIDDEN))continue;
       const auto &t=model.tiles[w.index];
-      if((t.is_clock() && new_minute) || (t.domain()=="timer" && t.state=="active") || (t.domain()=="sun" && second%60==0))card(w.index);
+      if(((t.is_clock() || t.display=="clock_weather") && new_minute) || (t.domain()=="timer" && t.state=="active") || (t.domain()=="sun" && second%60==0))card(w.index);
       // A media tile over the whole page: its bar runs on while the track plays (firmware 0.2.64+).
       if(w.extra_mode=="media" && w.extra && !lv_obj_has_flag(w.extra,LV_OBJ_FLAG_HIDDEN) && w.parts[5] && !lv_obj_has_flag(w.parts[5],LV_OBJ_FLAG_HIDDEN))media_progress(t,w.parts[5],w.parts[6],w.media_bar_w);
       // The second hand moves on its own: only its line is redrawn, and it hides during standby. Only while the

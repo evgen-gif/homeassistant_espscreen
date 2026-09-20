@@ -167,7 +167,7 @@ def capabilities(entity_id, actions, state, services):
         features = attributes.get('supported_features')
         # An entity that reports no features yet (unavailable) keeps the forecast, as forecast_kinds does.
         if not isinstance(features, int) or isinstance(features, bool) or features & WEATHER_DAILY:
-            displays.append('forecast')
+            displays.extend(('forecast', 'clock_weather'))
     elif domain == 'sun':
         displays.append('sunpath')
     return {

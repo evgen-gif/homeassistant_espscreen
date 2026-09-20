@@ -339,7 +339,7 @@ export function setTileOption(tile: Tile, key: string, value: unknown) {
   tile.options = { ...tile.options, [key]: value };
   // Direct controls need the standard layout without a mini slider, and vice versa.
   if (key === "display" && value === "watch") { tile.options.inline = "none"; if (state.inventory.controls?.[domain]) tile.options.controls = "none"; }
-  if (key === "display" && ["forecast", "sunpath"].includes(value as string)) tile.options.size = "wide";
+  if (key === "display" && ["forecast", "clock_weather", "sunpath"].includes(value as string)) tile.options.size = "wide";
   if (key === "inline" && value === "slider") { tile.options.display = "standard"; if (state.inventory.controls?.[domain]) tile.options.controls = "none"; }
   if (key === "controls" && value !== "none") { tile.options.display = "standard"; tile.options.inline = "none"; }
   // A card that becomes wide gets the first direct control Home Assistant offers when the usual one isn't there.

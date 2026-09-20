@@ -47,6 +47,8 @@ const displays = computed(() => {
   const keys = domain.value === "screen" ? ["digital", "analog"] : ["standard", "watch"];
   const c = caps.value;
   if (domain.value === "weather" && (!c || c.displays.includes("forecast") || display.value === "forecast")) keys.push("forecast");
+  // Clock & weather (SDS fork): the forecast card with the time and date at its left; the same forecast it needs.
+  if (domain.value === "weather" && (!c || c.displays.includes("forecast") || display.value === "clock_weather")) keys.push("clock_weather");
   if (domain.value === "sensor" && (!c || c.displays.includes("graph") || display.value === "graph")) keys.push("graph");
   if (domain.value === "sun") keys.push("sunpath");
   return keys.map((key) => [key, t(`editor.tile.display.${key}`)] as [string, string]);
@@ -54,7 +56,7 @@ const displays = computed(() => {
 const displayHint = computed(() => {
   const c = caps.value;
   if (c && display.value === "graph" && !c.displays.includes("graph")) return t("editor.tile.display.no_graph");
-  if (c && display.value === "forecast" && !c.displays.includes("forecast")) return t("editor.tile.display.no_forecast");
+  if (c && ["forecast", "clock_weather"].includes(display.value) && !c.displays.includes("forecast")) return t("editor.tile.display.no_forecast");
   return "";
 });
 const size = computed(() => current("size", "single") as string);
@@ -91,7 +93,7 @@ const sliderWarn = computed(() => inline.value === "slider" && caps.value && !ca
 const history = computed(() => current("history_hours", 24) as number);
 const backgrounds = computed(() => Object.entries(state.inventory.backgrounds || {}));
 const fromHA = computed(() => Boolean(state.inventory.entities.find((e) => e.id === props.tile.entity)?.icon));
-const showIcon = computed(() => Boolean(state.inventory.icons) && (domain.value !== "screen" || goesTo.value > 0) && !["forecast", "sunpath"].includes(display.value));
+const showIcon = computed(() => Boolean(state.inventory.icons) && (domain.value !== "screen" || goesTo.value > 0) && !["forecast", "clock_weather", "sunpath"].includes(display.value));
 function rename(value: string) {
   props.tile.name = value;
   markDirty();

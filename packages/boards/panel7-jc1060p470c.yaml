@@ -96,7 +96,7 @@ substitutions:
   FONT_TIME_SIZE: "27"                          # the clock in the top bar
   FONT_HEADLINE_SIZE: "27"                      # card titles
   FONT_WATCH_VALUE_SIZE: "38"
-  FONT_CLOCK_DIGITS_SIZE: "48"
+  FONT_CLOCK_DIGITS_SIZE: "64"                  # the clock on a 1024x600 card (48 on the 4-inch)
   FONT_SETPOINT_SIZE: "64"                      # the climate card's setpoint
   FONT_LABEL_SIZE: "22"                         # tile titles
   FONT_SUBLABEL_SIZE: "19"                      # tile values and small text

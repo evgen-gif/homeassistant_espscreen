@@ -90,9 +90,9 @@ def backgrounds():
     return {name: {**item, 'label': t(f'addon.labels.backgrounds.{name}')} for name, item in TILE_BACKGROUNDS.items()}
 
 # Display modes per domain; everything else offers standard and watch (large value).
-DISPLAYS = {'weather': ('standard', 'watch', 'forecast'), 'sensor': ('standard', 'watch', 'graph'), 'screen': ('digital', 'analog'), 'sun': ('standard', 'watch', 'sunpath')}
+DISPLAYS = {'weather': ('standard', 'watch', 'forecast', 'clock_weather'), 'sensor': ('standard', 'watch', 'graph'), 'screen': ('digital', 'analog'), 'sun': ('standard', 'watch', 'sunpath')}
 # Displays that only work on a double-width card.
-WIDE_ONLY = ('forecast', 'sunpath')
+WIDE_ONLY = ('forecast', 'clock_weather', 'sunpath')
 
 # Grid positions: two columns, three rows per page, at most eight pages. A tile's
 # `slot` is its absolute cell (page * 6 + row * 2 + column); a wide tile starts in
