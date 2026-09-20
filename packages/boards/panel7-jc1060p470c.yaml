@@ -348,8 +348,15 @@ esp32:
       # NOT execute_from_psram (CONFIG_SPIRAM_XIP_FROM_PSRAM crashes this board, docs/panel-p4.md)
     sdkconfig_options:
       # The main task builds the whole LVGL tree in on_boot; the panel's own firmware already overflowed
-      # 8 KiB (docs/panel-p4.md) and this tree is bigger. The P4 has 768 KiB of internal RAM to spare.
-      CONFIG_ESP_MAIN_TASK_STACK_SIZE: "32768"
+      # 8 KiB (docs/panel-p4.md) and this tree is bigger. Not more: on this early P4 silicon only the 123 KiB
+      # of L2MEM below the ROM stack exist while the main task is made (heap/port/esp32p4/memory_layout.c),
+      # and esp_hosted's constructor already took its tasks and SDIO buffers from it; 32 KiB failed the
+      # assert in esp_startup_start_app (2026-09-20).
+      CONFIG_ESP_MAIN_TASK_STACK_SIZE: "16384"
+      # esp_hosted (the C6 Wi-Fi link) keeps its task stacks and transport buffers in PSRAM, as its own help
+      # suggests for the P4, so the early internal heap stays free for the main task.
+      CONFIG_ESP_HOSTED_DFLT_TASK_FROM_SPIRAM: y
+      CONFIG_ESP_HOSTED_MEMPOOL_PREFER_SPIRAM: y
       # Building the tiles at boot takes longer than the 5 s the task watchdog allows on a slow first frame.
       CONFIG_ESP_TASK_WDT_TIMEOUT_S: "30"
       CONFIG_ESP_SYSTEM_HW_STACK_GUARD: y
