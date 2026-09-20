@@ -378,7 +378,8 @@ esp32_hosted:
 
 logger:
   tx_buffer_size: 2048
-  hardware_uart: UART0
+  # The USB-C port is this board's console (UART0's pins go to the header); the panel's own firmware logs there too.
+  hardware_uart: USB_SERIAL_JTAG
 
 api:
   actions: []
