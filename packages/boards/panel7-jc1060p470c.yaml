@@ -417,6 +417,22 @@ online_image:
     on_error:
       - lambda: 'runtime_tiles::camera_failed(true);'
 
+# Cyrillic on the screen (SDS, 2026-09-20): the shared fonts list Latin letters only, so a room called «Спальня» or a
+# state «Тёплая» came out blank. GF_Cyrillic_Core (241 code points: Russian, Ukrainian, Bulgarian, Serbian) joins the
+# five fonts that write words; the digit fonts and the icon fonts need nothing. About 200 KB of flash across the
+# five, which this 16 MB board has. The 4-inch Guition and the CYD keep their lists (docs/TRANSLATING.md).
+font:
+  - id: !extend headline
+    glyphsets: [GF_Cyrillic_Core]
+  - id: !extend watch_value
+    glyphsets: [GF_Cyrillic_Core]
+  - id: !extend label
+    glyphsets: [GF_Cyrillic_Core]
+  - id: !extend sublabel
+    glyphsets: [GF_Cyrillic_Core]
+  - id: !extend sublabel_big
+    glyphsets: [GF_Cyrillic_Core]
+
 text_sensor:
   - platform: template
     name: "Guition screen type"

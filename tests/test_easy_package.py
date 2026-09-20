@@ -97,6 +97,11 @@ class PackageTests(unittest.TestCase):
             self.assertNotIn(needle, core, f'{needle} is a board\'s, not the core\'s')
         # How the firmware is built is the same on every board, in the board's own esp32: block (firmware 0.2.75+).
         for board, path in profiles.BOARDS.items():
+            if board in ('panel7', 'panel10'):
+                # The P4 boards keep the panic handler talking: a boot crash on their USB console names its assert
+                # (2026-09-20), and 16 MB of flash has room for the messages.
+                self.assertNotIn('assertion_level', path.read_text(), board)
+                continue
             self.assertIn('      assertion_level: SILENT\n', path.read_text(), board)
         names = {board: set(profiles.substitutions_of(path)) for board, path in profiles.BOARDS.items()}
         shared = set.intersection(*names.values())
