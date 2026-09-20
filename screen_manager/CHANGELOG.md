@@ -1,3 +1,12 @@
+## 0.2.190 (firmware 0.2.176)
+
+The SDS fork: ESP Screens on the Guition ESP32-P4 panels, a clock beside the weather, and Russian and Ukrainian on the screens. Fork versions count from 0.2.190 so they never collide with the original project's numbers.
+
+- **Two new boards: the Guition 7-inch (JC1060P470C) and 10-inch (JC8012P4A1) ESP32-P4 panels.** 1024 × 600 and 1280 × 800, the same tiles and cards as the 4-inch Guition, with larger clock digits. The 10-inch has a portrait matrix that LVGL turns a quarter, so its own Rotation setting is off. Both boot with a 16 KB main stack and the Wi-Fi link's buffers in PSRAM: on this early P4 silicon only 123 KB of internal memory exist before the scheduler runs.
+- **Clock & weather.** A wide or full-page weather tile can show the time and the date at its left, then the current conditions and the five coming days; a full page adds four hour columns. New under the tile's **Display**, wherever the weather forecast is offered. It redraws every minute like a clock tile.
+- **Russian and Ukrainian on the screens.** The two P4 panels draw Cyrillic (the core set of 241 letters, in the five fonts that write words), and `screen_manager/translations/ru.json` and `uk.json` carry the screens' texts, with Home Assistant's own words for states from your Home Assistant. The editor and the app's messages in these languages come in a later version; until then they show in English. The CYD and the 4-inch Guition keep their Latin fonts.
+- **A screen says which board it is.** The screen type sensor publishes its value (guition, panel7, panel10) so the app takes the right sizes for camera images and alerts.
+
 ## 0.2.90 (firmware 0.2.76)
 
 ESP Screens speaks your language: the screens, the editor and its messages in nine languages, with the numbers, the clock and Home Assistant's own words as your country writes them.

@@ -1,0 +1,414 @@
+{
+  "_meta": {
+    "name": "Українська",
+    "english": "Ukrainian",
+    "script": "cyrillic",
+    "plural": "east_slavic",
+    "clock": "24",
+    "checked": false
+  },
+  "screen": {
+    "number": {
+      "decimal": ",",
+      "group": " ",
+      "group_min": "1",
+      "percent": "%"
+    },
+    "time": {
+      "am": "дп",
+      "pm": "пп",
+      "just_now": "Щойно",
+      "minutes_ago": "{n} хв тому",
+      "hours_ago": "1 годину тому | {n} години тому | {n} годин тому",
+      "yesterday": "Вчора",
+      "days_ago": "1 день тому | {n} дні тому | {n} днів тому",
+      "weeks_ago": "1 тиждень тому | {n} тижні тому | {n} тижнів тому",
+      "months_ago": "1 місяць тому | {n} місяці тому | {n} місяців тому",
+      "years_ago": "1 рік тому | {n} роки тому | {n} років тому",
+      "in_minutes": "Через {n} хв",
+      "in_hours": "Через 1 годину | Через {n} години | Через {n} годин",
+      "tomorrow": "Завтра",
+      "in_days": "Через 1 день | Через {n} дні | Через {n} днів"
+    },
+    "date": {
+      "weekdays": [
+        "неділя",
+        "понеділок",
+        "вівторок",
+        "середа",
+        "четвер",
+        "пʼятниця",
+        "субота"
+      ],
+      "weekdays_short": [
+        "нд",
+        "пн",
+        "вт",
+        "ср",
+        "чт",
+        "пт",
+        "сб"
+      ],
+      "weekdays_min": [
+        "нд",
+        "пн",
+        "вт",
+        "ср",
+        "чт",
+        "пт",
+        "сб"
+      ],
+      "months": [
+        "січня",
+        "лютого",
+        "березня",
+        "квітня",
+        "травня",
+        "червня",
+        "липня",
+        "серпня",
+        "вересня",
+        "жовтня",
+        "листопада",
+        "грудня"
+      ],
+      "months_short": [
+        "січ.",
+        "лют.",
+        "бер.",
+        "квіт.",
+        "трав.",
+        "черв.",
+        "лип.",
+        "серп.",
+        "вер.",
+        "жовт.",
+        "лист.",
+        "груд."
+      ],
+      "top_bar": "{weekday}, {day} {month}",
+      "full": "{weekday}, {day} {month}",
+      "day_month": "{day} {month}",
+      "weekday_time": "{weekday} {time}"
+    },
+    "ha": {
+      "on": "Увімкнено",
+      "off": "Вимкнено",
+      "climate": {
+        "off": "Вимкнено",
+        "heat": "Обігрів",
+        "cool": "Охолодження",
+        "heat_cool": "Обігрів/Охолодження",
+        "auto": "Auto",
+        "dry": "Осушення",
+        "fan_only": "Тільки вентилятор"
+      },
+      "hvac_action": {
+        "heating": "Нагрівання",
+        "cooling": "Охолодження",
+        "idle": "Очікування",
+        "off": "Вимкнено",
+        "drying": "Сушіння",
+        "fan": "Вентилятор",
+        "preheating": "Підігрів",
+        "defrosting": "Розморожування"
+      },
+      "climate_fan": {
+        "auto": "Auto",
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "middle": "Середній",
+        "focus": "Фокус",
+        "diffuse": "Дифузний",
+        "top": "Верх",
+        "on": "Увімкнено",
+        "off": "Вимкнено"
+      },
+      "climate_swing": {
+        "on": "Увімкнено",
+        "off": "Вимкнено",
+        "both": "Обидва",
+        "vertical": "Вертикальний",
+        "horizontal": "Горизонтальний"
+      },
+      "cover": {
+        "open": "Відчинено",
+        "closed": "Зачинено",
+        "opening": "Відкриття",
+        "closing": "Closing"
+      },
+      "media": {
+        "playing": "Відтворюється",
+        "paused": "Призупинено",
+        "idle": "Очікування",
+        "standby": "Очікування"
+      },
+      "person": {
+        "home": "Вдома",
+        "not_home": "Не вдома"
+      },
+      "sun": {
+        "above_horizon": "Над горизонтом",
+        "below_horizon": "За горизонтом"
+      },
+      "vacuum": {
+        "docked": "Пристиковано",
+        "cleaning": "Прибирання",
+        "paused": "Призупинено",
+        "returning": "Повернення на док-станцію",
+        "idle": "Очікування"
+      },
+      "weather": {
+        "sunny": "Сонячно",
+        "clear_night": "Ясно, ніч",
+        "cloudy": "Хмарно",
+        "partlycloudy": "Мінлива хмарність",
+        "rainy": "Дощ",
+        "pouring": "Злива",
+        "snowy": "Сніжно",
+        "snowy_rainy": "Сніг, дощ",
+        "fog": "Туман",
+        "hail": "Град",
+        "lightning": "Блискавка",
+        "lightning_rainy": "Блискавка, дощ",
+        "windy": "Вітряно",
+        "exceptional": "Попередження"
+      },
+      "binary": {
+        "battery_on": "Low",
+        "battery_off": "Normal",
+        "battery_charging_on": "Charging",
+        "battery_charging_off": "Не заряджається",
+        "carbon_monoxide_on": "Виявлено",
+        "carbon_monoxide_off": "Не виявлено",
+        "cold_on": "Охолодження",
+        "cold_off": "Normal",
+        "connectivity_on": "Підключено",
+        "connectivity_off": "Відключено",
+        "door_on": "Відчинено",
+        "door_off": "Зачинено",
+        "garage_door_on": "Відчинено",
+        "garage_door_off": "Зачинено",
+        "gas_on": "Виявлено",
+        "gas_off": "Не виявлено",
+        "heat_on": "Нагрівання",
+        "heat_off": "Normal",
+        "light_on": "Виявлено світло",
+        "light_off": "Немає світла",
+        "lock_on": "Розблоковано",
+        "lock_off": "Заблоковано",
+        "moisture_on": "Волого",
+        "moisture_off": "Сухо",
+        "motion_on": "Виявлено",
+        "motion_off": "Не виявлено",
+        "moving_on": "Має рух",
+        "moving_off": "Без руху",
+        "occupancy_on": "Виявлено",
+        "occupancy_off": "Не виявлено",
+        "opening_on": "Відчинено",
+        "opening_off": "Зачинено",
+        "plug_on": "Підключено",
+        "plug_off": "Відключено",
+        "power_on": "Увімкнено",
+        "power_off": "Вимкнено",
+        "presence_on": "Home",
+        "presence_off": "Away",
+        "problem_on": "Проблема",
+        "problem_off": "OK",
+        "running_on": "Запущено",
+        "running_off": "Не запущено",
+        "safety_on": "Небезпечно",
+        "safety_off": "Безпечно",
+        "smoke_on": "Виявлено",
+        "smoke_off": "Не виявлено",
+        "sound_on": "Виявлено",
+        "sound_off": "Не виявлено",
+        "tamper_on": "Виявлено втручання",
+        "tamper_off": "Не виявлено",
+        "update_on": "Доступне оновлення",
+        "update_off": "Актуальний",
+        "vibration_on": "Виявлено",
+        "vibration_off": "Не виявлено",
+        "window_on": "Відчинено",
+        "window_off": "Зачинено"
+      },
+      "unavailable": "Недоступно",
+      "button": {
+        "activate": "Активувати",
+        "run": "Запустити",
+        "press": "Натиснути"
+      }
+    },
+    "duration": {
+      "seconds": "{n} с",
+      "minutes": "{n} хв",
+      "hours": "{n} год",
+      "hours_minutes": "{h} год {m} хв",
+      "days": "{n} д",
+      "days_hours": "{d} д {h} год"
+    },
+    "status": {
+      "connecting": "Підключення до Home Assistant",
+      "waiting": "Очікування ESP Screens",
+      "loading_tiles": "Завантаження плиток...",
+      "ha_not_connected": "HA не підключено",
+      "manager_not_active": "ESP Screens не активний",
+      "choose_tiles": "Оберіть плитки в HA",
+      "home": "Дім",
+      "no_network": "Немає мережі"
+    },
+    "settings": {
+      "title": "Налаштування",
+      "brightness": "Яскравість",
+      "night": "Ніч",
+      "screen": "Екран",
+      "this_screen": "Цей екран",
+      "dark_mode": "Темна тема",
+      "auto_standby": "Автозасинання",
+      "standby_after": "Засинати через",
+      "standby_brightness": "Яскравість в очікуванні",
+      "night_mode": "Нічний режим",
+      "starts": "Початок",
+      "ends": "Кінець",
+      "night_brightness": "Нічна яскравість",
+      "back_to_page_1": "На сторінку 1",
+      "after": "Через",
+      "also_on_standby": "Також при засинанні",
+      "swipe_between_pages": "Гортати свайпом",
+      "page_buttons": "Кнопки сторінок",
+      "rotation": "Поворот",
+      "address": "Адреса",
+      "firmware": "Прошивка",
+      "home_assistant": "Home Assistant",
+      "restart": "Перезапуск",
+      "connected": "Підключено",
+      "not_connected": "Не підключено",
+      "tap_again_to_restart": "Натисніть ще раз для перезапуску",
+      "seconds": "{n} сек",
+      "minutes": "{n} хв",
+      "hours": "{n} год",
+      "hours_minutes": "{h} год {m}"
+    },
+    "tile": {
+      "tap_to_open": "Відкрити",
+      "page": "Сторінка {n}",
+      "refused": "Відхилено",
+      "command_sent": "Команду надіслано...",
+      "confirmed": "Підтверджено Home Assistant"
+    },
+    "alert": {
+      "notification": "Сповіщення",
+      "ok": "ОК"
+    },
+    "light": {
+      "color": "Колір",
+      "color_temperature": "Температура світла",
+      "brightness": "Яскравість",
+      "waiting": "Очікування..."
+    },
+    "effects": {
+      "effect": "Ефект",
+      "nothing": "Нічого обирати",
+      "loading": "Завантаження...",
+      "not_connected": "Не підключено"
+    },
+    "climate": {
+      "target": "Ціль",
+      "mode": "Режим",
+      "fan": "Вент.",
+      "swing": "Гойдання",
+      "now": "Зараз {value}"
+    },
+    "vacuum": {
+      "check_robot": "Перевірте робота в HA",
+      "auto_suction": "Автоматична потужність",
+      "robot_chooses": "Робот сам обирає всмоктування й воду",
+      "per_room": "Всмоктування й вода за налаштуваннями кімнат",
+      "speed_quiet": "Тихо",
+      "speed_balanced": "Звичайно",
+      "speed_turbo": "Турбо",
+      "speed_max": "Макс",
+      "pause_cleaning": "Призупинити прибирання",
+      "pause": "Пауза",
+      "resume": "Далі",
+      "start_cleaning": "Почати прибирання",
+      "clean": "Прибрати",
+      "dock": "На базу"
+    },
+    "cover": {
+      "position": "Положення",
+      "tilt": "Нахил",
+      "tilt_value": "Нахил {n}%"
+    },
+    "weather": {
+      "feels_like": "Відчувається {n}°",
+      "no_forecast": "Немає денного прогнозу від Home Assistant",
+      "coming_days": "Найближчі дні"
+    },
+    "history": {
+      "no_data": "Немає даних",
+      "average": "середнє",
+      "average_of": "середнє за {duration}",
+      "now": "Зараз",
+      "range_hour": "1 година",
+      "range_day": "24 години",
+      "range_week": "1 тиждень",
+      "high": "Макс {value}",
+      "low": "Мін {value}",
+      "times": "1 раз | {n} рази | {n} разів",
+      "loading": "Завантаження історії...",
+      "empty": "Немає історії за цей період",
+      "unavailable": "Історія недоступна"
+    },
+    "media": {
+      "muted": "Тихо",
+      "not_playing": "Не грає",
+      "loading": "Завантаж."
+    },
+    "timer": {
+      "running": "Іде",
+      "paused": "Пауза",
+      "stopped": "Зупинено",
+      "pause": "Пауза",
+      "start": "Старт",
+      "cancel": "Скасувати",
+      "paused_left": "Пауза {time}"
+    },
+    "sun": {
+      "name": "Сонце",
+      "sunrise": "Схід {time}",
+      "sunset": "Захід {time}",
+      "rise": "схід {time}",
+      "set": "захід {time}"
+    },
+    "script": {
+      "running": "Виконується...",
+      "never_run": "Не запускався",
+      "last_time": "Ост. {time}",
+      "yesterday_time": "Вчора {time}",
+      "yesterday_time_short": "Вч. {time}",
+      "last_date": "Ост. {date}"
+    },
+    "camera": {
+      "no_image": "Немає зображення з камери",
+      "loading": "Завантаження",
+      "live": "Наживо",
+      "recording": "Запис",
+      "tap_to_view": "Дивитись",
+      "no_image_yet": "Немає кадру"
+    },
+    "calibration": {
+      "title": "Дотримуйтесь майстра калібрування",
+      "touch_check": "Перевірка дотиків GT911",
+      "hold": "Затримайте кожне натискання",
+      "crosshair": "Натисніть на перехрестя\nТочка {point}/5 - натискання {tap}/3",
+      "gently": "Натискайте м'яко, трохи довше",
+      "same": "Натисніть те саме перехрестя 3 рази",
+      "rejected": "Вимірювання відхилено; спробуйте ще",
+      "save_failed": "Не вдалося зберегти; спробуйте ще"
+    }
+  },
+  "addon": {},
+  "editor": {}
+}

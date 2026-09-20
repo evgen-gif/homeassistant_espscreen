@@ -51,7 +51,7 @@ BIG_BOARDS = frozenset({'guition', 'panel7', 'panel10'})
 # Boards whose orientation is fixed in the profile (a portrait matrix turned by LVGL): no Rotation setting.
 FIXED_ROTATION_BOARDS = frozenset({'panel10'})
 # Firmware shipped with this app release; screens below it get an update offer.
-FIRMWARE_VERSION = '0.2.76'
+FIRMWARE_VERSION = '0.2.176'
 # The Auto standby switch a screen offers Home Assistant automations.
 AUTO_STANDBY_MIN_FIRMWARE = '0.2.41'
 # The settings page the screen opens itself, and the screen.settings tile that opens it.

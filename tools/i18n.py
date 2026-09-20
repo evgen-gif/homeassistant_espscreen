@@ -80,6 +80,24 @@ def font_letters():
     return set.intersection(*sets) if sets else set()
 
 
+def script_letters(script):
+    """The letters a language's script adds on the boards that carry it: a board profile that extends the word fonts with
+    a Google Fonts glyph set (`glyphsets: [GF_Cyrillic_Core]`, the P4 panels) draws that script; the CYD and the 4-inch
+    Guition keep English there (docs/TRANSLATING.md, "Which languages fit")."""
+    sets = {'cyrillic': 'GF_Cyrillic_Core', 'greek': 'GF_Greek_Core'}
+    name = sets.get(script)
+    if not name:
+        return set()
+    boards = ROOT / 'packages' / 'boards'
+    if not any(name in path.read_text(encoding='utf-8') for path in boards.glob('*.yaml')):
+        return set()
+    try:
+        import esphome_glyphsets
+    except ImportError:
+        return set()
+    return {chr(point) for point in esphome_glyphsets.unicodes_per_glyphset(name)}
+
+
 def check():
     gen = generator()
     langs = languages()
@@ -125,7 +143,7 @@ def check():
             # The app's own words for the screens (addon.screen) are drawn by the same fonts.
             if key.startswith(('screen.', 'addon.screen.')) and drawable:
                 shown = PLACEHOLDER.sub('', text).replace('|', '')
-                unknown = sorted(set(shown) - drawable - {'\n'})
+                unknown = sorted(set(shown) - drawable - script_letters(meta.get('script')) - {'\n'})
                 if unknown:
                     problems.append(f'{code}: {key} uses letters the screens can\'t draw: {"".join(unknown)}')
                 # Home Assistant's words and the calendar's are what they are; our own texts should stay about as short.

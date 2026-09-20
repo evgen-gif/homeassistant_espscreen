@@ -1,0 +1,414 @@
+{
+  "_meta": {
+    "name": "Русский",
+    "english": "Russian",
+    "script": "cyrillic",
+    "plural": "east_slavic",
+    "clock": "24",
+    "checked": false
+  },
+  "screen": {
+    "number": {
+      "decimal": ",",
+      "group": " ",
+      "group_min": "1",
+      "percent": "%"
+    },
+    "time": {
+      "am": "AM",
+      "pm": "PM",
+      "just_now": "Только что",
+      "minutes_ago": "{n} мин назад",
+      "hours_ago": "1 час назад | {n} часа назад | {n} часов назад",
+      "yesterday": "Вчера",
+      "days_ago": "1 день назад | {n} дня назад | {n} дней назад",
+      "weeks_ago": "1 неделю назад | {n} недели назад | {n} недель назад",
+      "months_ago": "1 месяц назад | {n} месяца назад | {n} месяцев назад",
+      "years_ago": "1 год назад | {n} года назад | {n} лет назад",
+      "in_minutes": "Через {n} мин",
+      "in_hours": "Через 1 час | Через {n} часа | Через {n} часов",
+      "tomorrow": "Завтра",
+      "in_days": "Через 1 день | Через {n} дня | Через {n} дней"
+    },
+    "date": {
+      "weekdays": [
+        "воскресенье",
+        "понедельник",
+        "вторник",
+        "среда",
+        "четверг",
+        "пятница",
+        "суббота"
+      ],
+      "weekdays_short": [
+        "вс",
+        "пн",
+        "вт",
+        "ср",
+        "чт",
+        "пт",
+        "сб"
+      ],
+      "weekdays_min": [
+        "вс",
+        "пн",
+        "вт",
+        "ср",
+        "чт",
+        "пт",
+        "сб"
+      ],
+      "months": [
+        "января",
+        "февраля",
+        "марта",
+        "апреля",
+        "мая",
+        "июня",
+        "июля",
+        "августа",
+        "сентября",
+        "октября",
+        "ноября",
+        "декабря"
+      ],
+      "months_short": [
+        "янв.",
+        "февр.",
+        "мар.",
+        "апр.",
+        "мая",
+        "июн.",
+        "июл.",
+        "авг.",
+        "сент.",
+        "окт.",
+        "нояб.",
+        "дек."
+      ],
+      "top_bar": "{weekday}, {day} {month}",
+      "full": "{weekday}, {day} {month}",
+      "day_month": "{day} {month}",
+      "weekday_time": "{weekday} {time}"
+    },
+    "ha": {
+      "on": "Включено",
+      "off": "Выключено",
+      "climate": {
+        "off": "Выключено",
+        "heat": "Обогрев",
+        "cool": "Охлаждение",
+        "heat_cool": "Обогрев / Охлаждение",
+        "auto": "Автоматический",
+        "dry": "Осушение",
+        "fan_only": "Вентиляция"
+      },
+      "hvac_action": {
+        "heating": "Обогрев",
+        "cooling": "Охлаждение",
+        "idle": "Бездействие",
+        "off": "Выключено",
+        "drying": "Осушение",
+        "fan": "Вентиляция",
+        "preheating": "Предварительный нагрев",
+        "defrosting": "Разморозка"
+      },
+      "climate_fan": {
+        "auto": "Автоматический",
+        "low": "Низкий",
+        "medium": "Средний",
+        "high": "Высокий",
+        "middle": "Среднее",
+        "focus": "Фокус",
+        "diffuse": "Диффузный",
+        "top": "Вверх",
+        "on": "Включено",
+        "off": "Выключено"
+      },
+      "climate_swing": {
+        "on": "Включено",
+        "off": "Выключено",
+        "both": "Оба",
+        "vertical": "Вертикально",
+        "horizontal": "Горизонтально"
+      },
+      "cover": {
+        "open": "Открыто",
+        "closed": "Закрыто",
+        "opening": "Открывается",
+        "closing": "Закрывается"
+      },
+      "media": {
+        "playing": "Воспроизведение",
+        "paused": "Пауза",
+        "idle": "Бездействие",
+        "standby": "Ожидание"
+      },
+      "person": {
+        "home": "Дома",
+        "not_home": "Не дома"
+      },
+      "sun": {
+        "above_horizon": "Над горизонтом",
+        "below_horizon": "Ниже горизонта"
+      },
+      "vacuum": {
+        "docked": "У док-станции",
+        "cleaning": "Уборка",
+        "paused": "Пауза",
+        "returning": "Возвращается к док-станции",
+        "idle": "Бездействие"
+      },
+      "weather": {
+        "sunny": "Ясно",
+        "clear_night": "Ясно",
+        "cloudy": "Облачно",
+        "partlycloudy": "Переменная облачность",
+        "rainy": "Дождь",
+        "pouring": "Ливень",
+        "snowy": "Снег",
+        "snowy_rainy": "Снег с дождем",
+        "fog": "Туман",
+        "hail": "Град",
+        "lightning": "Гроза",
+        "lightning_rainy": "Дождь с грозой",
+        "windy": "Ветрено",
+        "exceptional": "Предупреждение"
+      },
+      "binary": {
+        "battery_on": "Низкий",
+        "battery_off": "Нормальное",
+        "battery_charging_on": "Заряжается",
+        "battery_charging_off": "Не заряжается",
+        "carbon_monoxide_on": "Обнаружен",
+        "carbon_monoxide_off": "Не обнаружен",
+        "cold_on": "Холодный",
+        "cold_off": "Нормальное",
+        "connectivity_on": "Подключено",
+        "connectivity_off": "Отключено",
+        "door_on": "Открыто",
+        "door_off": "Закрыто",
+        "garage_door_on": "Открыто",
+        "garage_door_off": "Закрыто",
+        "gas_on": "Обнаружен",
+        "gas_off": "Не обнаружен",
+        "heat_on": "Горячий",
+        "heat_off": "Нормальное",
+        "light_on": "Свет обнаружен",
+        "light_off": "Свет не обнаружен",
+        "lock_on": "Открыто",
+        "lock_off": "Заблокировано",
+        "moisture_on": "Обнаружена",
+        "moisture_off": "Не обнаружена",
+        "motion_on": "Обнаружено",
+        "motion_off": "Не обнаружено",
+        "moving_on": "Перемещается",
+        "moving_off": "Не перемещается",
+        "occupancy_on": "Обнаружено",
+        "occupancy_off": "Не обнаружено",
+        "opening_on": "Открыто",
+        "opening_off": "Закрыто",
+        "plug_on": "Подключено",
+        "plug_off": "Отключено",
+        "power_on": "Включено",
+        "power_off": "Выключено",
+        "presence_on": "Дома",
+        "presence_off": "Не дома",
+        "problem_on": "Проблема",
+        "problem_off": "ОК",
+        "running_on": "Работает",
+        "running_off": "Не работает",
+        "safety_on": "Небезопасно",
+        "safety_off": "Безопасно",
+        "smoke_on": "Обнаружен",
+        "smoke_off": "Не обнаружен",
+        "sound_on": "Обнаружен",
+        "sound_off": "Не обнаружен",
+        "tamper_on": "Обнаружено",
+        "tamper_off": "Не обнаружено",
+        "update_on": "Доступно обновление",
+        "update_off": "Нет обновлений",
+        "vibration_on": "Обнаружена",
+        "vibration_off": "Не обнаружена",
+        "window_on": "Открыто",
+        "window_off": "Закрыто"
+      },
+      "unavailable": "Недоступно",
+      "button": {
+        "activate": "Активировать",
+        "run": "Запустить",
+        "press": "Нажать"
+      }
+    },
+    "duration": {
+      "seconds": "{n} с",
+      "minutes": "{n} мин",
+      "hours": "{n} ч",
+      "hours_minutes": "{h} ч {m} мин",
+      "days": "{n} д",
+      "days_hours": "{d} д {h} ч"
+    },
+    "status": {
+      "connecting": "Подключение к Home Assistant",
+      "waiting": "Ожидание ESP Screens",
+      "loading_tiles": "Загрузка плиток...",
+      "ha_not_connected": "HA не подключён",
+      "manager_not_active": "ESP Screens не активен",
+      "choose_tiles": "Выберите плитки в HA",
+      "home": "Дом",
+      "no_network": "Нет сети"
+    },
+    "settings": {
+      "title": "Настройки",
+      "brightness": "Яркость",
+      "night": "Ночь",
+      "screen": "Экран",
+      "this_screen": "Этот экран",
+      "dark_mode": "Тёмная тема",
+      "auto_standby": "Автозасыпание",
+      "standby_after": "Засыпать через",
+      "standby_brightness": "Яркость в режиме ожидания",
+      "night_mode": "Ночной режим",
+      "starts": "Начало",
+      "ends": "Конец",
+      "night_brightness": "Ночная яркость",
+      "back_to_page_1": "Возврат на страницу 1",
+      "after": "Через",
+      "also_on_standby": "Также при засыпании",
+      "swipe_between_pages": "Листать свайпом",
+      "page_buttons": "Кнопки страниц",
+      "rotation": "Поворот",
+      "address": "Адрес",
+      "firmware": "Прошивка",
+      "home_assistant": "Home Assistant",
+      "restart": "Перезапуск",
+      "connected": "Подключено",
+      "not_connected": "Не подключено",
+      "tap_again_to_restart": "Нажмите ещё раз для перезапуска",
+      "seconds": "{n} сек",
+      "minutes": "{n} мин",
+      "hours": "{n} ч",
+      "hours_minutes": "{h} ч {m}"
+    },
+    "tile": {
+      "tap_to_open": "Открыть",
+      "page": "Страница {n}",
+      "refused": "Отклонено",
+      "command_sent": "Команда отправлена...",
+      "confirmed": "Подтверждено Home Assistant"
+    },
+    "alert": {
+      "notification": "Уведомление",
+      "ok": "ОК"
+    },
+    "light": {
+      "color": "Цвет",
+      "color_temperature": "Температура света",
+      "brightness": "Яркость",
+      "waiting": "Ожидание..."
+    },
+    "effects": {
+      "effect": "Эффект",
+      "nothing": "Нечего выбирать",
+      "loading": "Загрузка...",
+      "not_connected": "Не подключено"
+    },
+    "climate": {
+      "target": "Цель",
+      "mode": "Режим",
+      "fan": "Вент.",
+      "swing": "Качание",
+      "now": "Сейчас {value}"
+    },
+    "vacuum": {
+      "check_robot": "Проверьте робота в HA",
+      "auto_suction": "Автоматическая мощность",
+      "robot_chooses": "Робот сам выбирает всасывание и воду",
+      "per_room": "Всасывание и вода по настройкам комнат",
+      "speed_quiet": "Тихо",
+      "speed_balanced": "Обычно",
+      "speed_turbo": "Турбо",
+      "speed_max": "Макс",
+      "pause_cleaning": "Приостановить уборку",
+      "pause": "Пауза",
+      "resume": "Дальше",
+      "start_cleaning": "Начать уборку",
+      "clean": "Убрать",
+      "dock": "На базу"
+    },
+    "cover": {
+      "position": "Положение",
+      "tilt": "Наклон",
+      "tilt_value": "Наклон {n}%"
+    },
+    "weather": {
+      "feels_like": "Ощущается {n}°",
+      "no_forecast": "Нет дневного прогноза от Home Assistant",
+      "coming_days": "Ближайшие дни"
+    },
+    "history": {
+      "no_data": "Нет данных",
+      "average": "среднее",
+      "average_of": "среднее за {duration}",
+      "now": "Сейчас",
+      "range_hour": "1 час",
+      "range_day": "24 часа",
+      "range_week": "1 неделя",
+      "high": "Макс {value}",
+      "low": "Мин {value}",
+      "times": "1 раз | {n} раза | {n} раз",
+      "loading": "Загрузка истории...",
+      "empty": "Нет истории за этот период",
+      "unavailable": "История недоступна"
+    },
+    "media": {
+      "muted": "Тихо",
+      "not_playing": "Не играет",
+      "loading": "Загрузка"
+    },
+    "timer": {
+      "running": "Идёт",
+      "paused": "Пауза",
+      "stopped": "Остановлен",
+      "pause": "Пауза",
+      "start": "Старт",
+      "cancel": "Отмена",
+      "paused_left": "Пауза {time}"
+    },
+    "sun": {
+      "name": "Солнце",
+      "sunrise": "Восход {time}",
+      "sunset": "Закат {time}",
+      "rise": "восход {time}",
+      "set": "закат {time}"
+    },
+    "script": {
+      "running": "Выполняется...",
+      "never_run": "Не запускался",
+      "last_time": "Посл. {time}",
+      "yesterday_time": "Вчера {time}",
+      "yesterday_time_short": "Вч. {time}",
+      "last_date": "Посл. {date}"
+    },
+    "camera": {
+      "no_image": "Нет изображения с камеры",
+      "loading": "Загрузка изображения",
+      "live": "Эфир",
+      "recording": "Запись",
+      "tap_to_view": "Смотреть",
+      "no_image_yet": "Нет кадра"
+    },
+    "calibration": {
+      "title": "Следуйте мастеру калибровки",
+      "touch_check": "Проверка касаний GT911",
+      "hold": "Задержите каждое нажатие",
+      "crosshair": "Нажмите на перекрестие\nТочка {point}/5 - нажатие {tap}/3",
+      "gently": "Нажимайте мягко, чуть дольше",
+      "same": "Нажмите на то же перекрестие 3 раза",
+      "rejected": "Измерение отклонено; попробуйте снова",
+      "save_failed": "Не сохранилось; ещё раз"
+    }
+  },
+  "addon": {},
+  "editor": {}
+}
