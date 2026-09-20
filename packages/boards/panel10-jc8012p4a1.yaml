@@ -333,12 +333,18 @@ esp32:
     type: esp-idf
     version: recommended
     advanced:
-      assertion_level: SILENT
+      # The panic handler prints, not stays silent: a boot crash then reaches the USB log instead of an
+      # "other watchdogs" reset with nothing to read (the first OTA rolled back that way, 2026-09-20).
       enable_idf_experimental_features: true
       # NOT execute_from_psram (CONFIG_SPIRAM_XIP_FROM_PSRAM crashes this board, docs/panel-p4.md)
     sdkconfig_options:
-      # main stack below 8 KiB overflows on boot with LVGL (docs/panel-p4.md)
-      CONFIG_ESP_MAIN_TASK_STACK_SIZE: "8192"
+      # The main task builds the whole LVGL tree in on_boot; the panel's own firmware already overflowed
+      # 8 KiB (docs/panel-p4.md) and this tree is bigger. The P4 has 768 KiB of internal RAM to spare.
+      CONFIG_ESP_MAIN_TASK_STACK_SIZE: "32768"
+      # Building the tiles at boot takes longer than the 5 s the task watchdog allows on a slow first frame.
+      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "30"
+      CONFIG_ESP_SYSTEM_HW_STACK_GUARD: y
+      CONFIG_FREERTOS_CHECK_STACKOVERFLOW_CANARY: y
 
 psram:
   mode: hex
