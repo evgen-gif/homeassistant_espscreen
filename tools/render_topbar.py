@@ -27,7 +27,7 @@ FONTS = ('headline', 'time_label', 'sublabel_big', 'label', 'materialdesign_icon
 # Hardware headers the host cannot compile; the top bar needs none of them.
 SKIP = {'guition_diagnostics.h', '__pycache__'}
 # Header band per board: page width and height above the tiles.
-BANDS = {'guition': (480, 72), 'cyd': (320, 40)}
+BANDS = {'guition': (480, 72), 'cyd': (320, 40), 'panel7': (1024, 72), 'panel10': (1280, 72)}
 
 # (slug, title, items) with items as C++ expressions of the render lambda's helpers.
 SCENARIOS = (

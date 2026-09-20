@@ -25,7 +25,7 @@ The wallbox relays are not used.
 1. Open **Settings → Apps → Install app** (on older HA versions:
    **Settings → Add-ons → Add-on Store**).
 2. Open the menu in the top right → **Repositories** and add:
-   `https://github.com/MaxGramser/homeassistant_espscreen`.
+   `https://github.com/evgen-gif/homeassistant_espscreen`.
 3. Install and start **ESP Screen Manager**. Turn on **Start on boot**
    and **Show in sidebar**. Open the **ESP Screens** web interface.
 

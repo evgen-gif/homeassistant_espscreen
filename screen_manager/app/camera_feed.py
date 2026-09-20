@@ -48,7 +48,7 @@ MAX_LINKS = 64
 CONTENT_TYPE = 'image/bmp'
 # The pixel box per board and view; the image keeps its proportions inside it. Equal to the CAMERA_*
 # substitutions of packages/guition.yaml (tests/test_camera.py).
-BOXES = {'guition': {'full': (480, 480), 'thumb': (392, 220)}}
+BOXES = {'guition': {'full': (480, 480), 'thumb': (392, 220)}, 'panel7': {'full': (1024, 600), 'thumb': (600, 338)}, 'panel10': {'full': (1280, 800), 'thumb': (600, 338)}}
 
 
 def supported(entity):

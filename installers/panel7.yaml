@@ -5,5 +5,5 @@ packages:
   screen:
     url: https://github.com/evgen-gif/homeassistant_espscreen
     ref: main
-    files: [packages/guition.yaml]
+    files: [packages/panel7.yaml]
     refresh: 0s

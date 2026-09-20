@@ -43,8 +43,13 @@ FULL_PAGE_MIN_FIRMWARE = (0, 2, 62)
 # Twenty tiles from firmware 0.2.7, ten before.
 TWENTY_TILES_MIN_FIRMWARE = (0, 2, 7)
 FIRST_MAX_TILES = 10
-REPO = 'https://github.com/MaxGramser/homeassistant_espscreen'
-REFS = {'cyd': 'main', 'guition': 'main'}
+WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
+REPO = 'https://github.com/evgen-gif/homeassistant_espscreen'
+REFS = {'cyd': 'main', 'guition': 'main', 'panel7': 'main', 'panel10': 'main'}
+# Boards with a big capacitive panel: rotation, camera images, the wider alert card (the CYD has none of it).
+BIG_BOARDS = frozenset({'guition', 'panel7', 'panel10'})
+# Boards whose orientation is fixed in the profile (a portrait matrix turned by LVGL): no Rotation setting.
+FIXED_ROTATION_BOARDS = frozenset({'panel10'})
 # Firmware shipped with this app release; screens below it get an update offer.
 FIRMWARE_VERSION = '0.2.76'
 # The Auto standby switch a screen offers Home Assistant automations.
@@ -1391,7 +1396,7 @@ ALERT_FIELDS = (
 # is a value to type as it is.
 ALERT_TEXT_EXAMPLES = frozenset(('title', 'subtitle', 'button_text'))
 # Bytes per field the firmware keeps (the profiles' ALERT_*_MAX); an accented letter takes two.
-ALERT_LIMITS = {'cyd': {'title': 48, 'subtitle': 160, 'button_text': 12}, 'guition': {'title': 64, 'subtitle': 240, 'button_text': 16}}
+ALERT_LIMITS = {'cyd': {'title': 48, 'subtitle': 160, 'button_text': 12}, 'guition': {'title': 64, 'subtitle': 240, 'button_text': 16}, 'panel7': {'title': 64, 'subtitle': 240, 'button_text': 16}, 'panel10': {'title': 64, 'subtitle': 240, 'button_text': 16}}
 ALERT_SUGGESTED_ICONS = ('doorbell', 'bell', 'bell-ring', 'alert-outline', 'alarm-light', 'lock', 'lock-open-variant', 'door-open',
                          'window-closed-variant', 'motion-sensor', 'cctv', 'smoke-detector', 'water-alert', 'fire', 'mailbox', 'car',
                          'account', 'account-group', 'washing-machine', 'robot-vacuum', 'timer-outline', 'check')
@@ -1519,8 +1524,10 @@ def discover_screens(registry, states, devices, areas):
     area_map = {a['area_id']: a['name'] for a in areas}
     versions = {item.get('device_id'): states.get(item['entity_id'], {}).get('state', 'unknown') for item in registry
                 if item.get('platform') == 'esphome' and item.get('original_name') in NAME_SCREEN_FIRMWARE}
-    boards = {item.get("device_id"): "guition" for item in registry
-              if item.get("platform") == "esphome" and item.get("original_name") in NAME_GUITION_TYPE}
+    # The screen type sensor's value names the board ("guition", "panel7"); an older Guition firmware that
+    # only had the sensor reads "guition" too.
+    boards = {item.get("device_id"): (states.get(item['entity_id'], {}).get('state') if states.get(item['entity_id'], {}).get('state') in REFS else "guition")
+              for item in registry if item.get("platform") == "esphome" and item.get("original_name") in NAME_GUITION_TYPE}
     def diagnostic(names, pattern):
         found = {}
         for item in registry:

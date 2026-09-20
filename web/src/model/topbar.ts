@@ -50,6 +50,8 @@ export function agoText(then: number, now = Math.floor(Date.now() / 1000), local
 export type BarMetrics = { width: number; top: number; name: number; text: number; icon: number };
 export const BAR_METRICS: Record<string, BarMetrics> = {
   guition: { width: 448, top: 36, name: 27, text: 21, icon: 26 },
+  panel7: { width: 992, top: 36, name: 27, text: 21, icon: 26 },
+  panel10: { width: 1248, top: 36, name: 27, text: 21, icon: 26 },
   cyd: { width: 298, top: 24, name: 18, text: 14, icon: 18 },
 };
 export type ItemView = { icon?: string | null; text?: string; color?: string | null; shown: boolean; analog?: boolean; loading?: boolean };

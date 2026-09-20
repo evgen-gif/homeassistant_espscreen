@@ -15,12 +15,13 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 CORE = ROOT / 'packages/core.yaml'
-BOARDS = {'cyd': ROOT / 'packages/boards/cyd-2432s028.yaml', 'guition': ROOT / 'packages/boards/guition-4848s040.yaml'}
-ENTRIES = {'home-like-2432s028.yaml': 'cyd', 'guition-4848s040.yaml': 'guition',
-           'packages/cyd.yaml': 'cyd', 'packages/guition.yaml': 'guition'}
+BOARDS = {'cyd': ROOT / 'packages/boards/cyd-2432s028.yaml', 'guition': ROOT / 'packages/boards/guition-4848s040.yaml',
+          'panel7': ROOT / 'packages/boards/panel7-jc1060p470c.yaml', 'panel10': ROOT / 'packages/boards/panel10-jc8012p4a1.yaml'}
+ENTRIES = {'home-like-2432s028.yaml': 'cyd', 'guition-4848s040.yaml': 'guition', 'panel7-jc1060p470c.yaml': 'panel7', 'panel10-jc8012p4a1.yaml': 'panel10',
+           'packages/cyd.yaml': 'cyd', 'packages/guition.yaml': 'guition', 'packages/panel7.yaml': 'panel7', 'packages/panel10.yaml': 'panel10'}
 # The names the four entry files are known by, in the order the older tests listed them.
-PROFILES = ('home-like-2432s028.yaml', 'guition-4848s040.yaml')
-PACKAGES = ('packages/cyd.yaml', 'packages/guition.yaml')
+PROFILES = ('home-like-2432s028.yaml', 'guition-4848s040.yaml', 'panel7-jc1060p470c.yaml', 'panel10-jc8012p4a1.yaml')
+PACKAGES = ('packages/cyd.yaml', 'packages/guition.yaml', 'packages/panel7.yaml', 'packages/panel10.yaml')
 NAMES = PROFILES + PACKAGES
 
 

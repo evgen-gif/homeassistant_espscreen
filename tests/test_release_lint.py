@@ -20,7 +20,7 @@ CHANGELOG = ROOT / 'screen_manager/CHANGELOG.md'
 APP_HEADING = re.compile(r'^## (\d+)\.(\d+)\.(\d+)\b(.*)$', re.M)
 FIRMWARE_IN_HEADING = re.compile(r'\(firmware (\d+\.\d+\.\d+)\)')
 # The published entries (packages/<board>.yaml) point ${FONT_DIR} at the raw GitHub URL of fonts/ on main.
-FONT_URL = re.compile(r'https://raw\.githubusercontent\.com/MaxGramser/homeassistant_espscreen/[^/\s"\']+/(fonts/[^"\'\s]+)')
+FONT_URL = re.compile(r'https://raw\.githubusercontent\.com/evgen-gif/homeassistant_espscreen/[^/\s"\']+/(fonts/[^"\'\s]+)')
 
 
 def app_headings():

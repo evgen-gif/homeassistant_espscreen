@@ -1576,6 +1576,8 @@
       "board": "Quale schermo hai?",
       "board_cyd": "CYD · 2,8 pollici",
       "board_guition": "Guition · 4 pollici",
+      "board_panel7": "Guition · 7 inch",
+      "board_panel10": "Guition · 10 inch",
       "name": "Nome",
       "name_placeholder": "Schermo del soggiorno",
       "device_name": "Nome dispositivo",

@@ -1576,6 +1576,8 @@
       "board": "Jaki masz ekran?",
       "board_cyd": "CYD · 2,8 cala",
       "board_guition": "Guition · 4 cale",
+      "board_panel7": "Guition · 7 inch",
+      "board_panel10": "Guition · 10 inch",
       "name": "Nazwa",
       "name_placeholder": "Ekran w salonie",
       "device_name": "Nazwa urządzenia",

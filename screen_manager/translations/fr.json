@@ -1576,6 +1576,8 @@
       "board": "Quel écran avez-vous ?",
       "board_cyd": "CYD · 2,8 pouces",
       "board_guition": "Guition · 4 pouces",
+      "board_panel7": "Guition · 7 inch",
+      "board_panel10": "Guition · 10 inch",
       "name": "Nom",
       "name_placeholder": "Écran du salon",
       "device_name": "Nom de l'appareil",

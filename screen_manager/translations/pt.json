@@ -1576,6 +1576,8 @@
       "board": "Que ecrã tem?",
       "board_cyd": "CYD · 2,8 polegadas",
       "board_guition": "Guition · 4 polegadas",
+      "board_panel7": "Guition · 7 inch",
+      "board_panel10": "Guition · 10 inch",
       "name": "Nome",
       "name_placeholder": "Ecrã da sala",
       "device_name": "Nome do dispositivo",

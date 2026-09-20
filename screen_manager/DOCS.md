@@ -1,6 +1,6 @@
 # Installation and everyday use
 
-See [the full installation guide](https://github.com/MaxGramser/homeassistant_espscreen/blob/main/docs/EASY_SETUP.md).
+See [the full installation guide](https://github.com/evgen-gif/homeassistant_espscreen/blob/main/docs/EASY_SETUP.md).
 
 Open **New screen** in the sidebar to install a screen: connect it via USB to the
 Home Assistant machine, choose the board, name and USB port, then click **Install**.

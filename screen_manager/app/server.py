@@ -19,7 +19,7 @@ import tile_icons
 from updates import Updater
 
 from aiohttp import ClientError, ClientSession, ClientTimeout, WSMsgType, web
-from core import BROADCAST_EVENTS, BROADCAST_SHOW, BUILTIN, CAMERA_DOMAINS, entity_id, SETTINGS_BESIDE_BLOCK, TILE_EVENTS, TILE_RESULT_EVENT, layout_snapshot, match_screen, HEADER_MIN_FIRMWARE, NAME_TILE_SETTINGS, TRANSPORT_MIN_FIRMWARE, alert_camera, alert_data, alert_reference, alert_service, alert_targets, backgrounds, builtin_name, controls_catalogue, device_prefixes, discover, discover_screens, encode, extras, forecast_kinds, header_items, inbox_prefix, message_action, min_firmware, packets, revision, screen_items, state_message, validate_header, validate_layout, validate_settings
+from core import BIG_BOARDS, FIXED_ROTATION_BOARDS, REFS, BROADCAST_EVENTS, BROADCAST_SHOW, BUILTIN, CAMERA_DOMAINS, entity_id, SETTINGS_BESIDE_BLOCK, TILE_EVENTS, TILE_RESULT_EVENT, layout_snapshot, match_screen, HEADER_MIN_FIRMWARE, NAME_TILE_SETTINGS, TRANSPORT_MIN_FIRMWARE, alert_camera, alert_data, alert_reference, alert_service, alert_targets, backgrounds, builtin_name, controls_catalogue, device_prefixes, discover, discover_screens, encode, extras, forecast_kinds, header_items, inbox_prefix, message_action, min_firmware, packets, revision, screen_items, state_message, validate_header, validate_layout, validate_settings
 from core import SETTING_ENTITIES, SETTING_RULES, setting_action, setting_entities, setting_from_state, state_word
 from core import PAGE_TILE_REPEAT_MIN_FIRMWARE, SLOTS_PER_PAGE, firmware_features, packed_slots, run_tile_event, screen_firmware, version_text
 import header_bar
@@ -813,7 +813,7 @@ class Manager:
         screen is offline, or the entity is disabled); their value is None, not a default that could differ
         from what the screen has."""
         inbox = self.aliases.get(screen['id'], screen['id'])
-        keys = [key for key in SETTING_RULES if key != 'show_clock' and (key != 'rotation' or screen.get('board') == 'guition')]
+        keys = [key for key in SETTING_RULES if key != 'show_clock' and (key != 'rotation' or (screen.get('board') in BIG_BOARDS and screen.get('board') not in FIXED_ROTATION_BOARDS))]
         entities = self.setting_entities(screen)
         if entities is None:
             try:
@@ -901,7 +901,7 @@ class Manager:
                 if dim not in changes:
                     wanted[dim] = min(wanted.get(dim, SETTING_RULES[dim][0]), changes['brightness'])
         merged = validate_settings(wanted)
-        if merged['rotation'] and screen.get('board') != 'guition':
+        if merged['rotation'] and (screen.get('board') not in BIG_BOARDS or screen.get('board') in FIXED_ROTATION_BOARDS):
             raise ValueError(t('addon.errors.settings.rotation'))
         if view['owner'] == 'layout':
             self.store_settings(inbox, merged, screen)
@@ -1133,7 +1133,7 @@ class Manager:
             layout['settings']['swipe_pages']=self.layouts.get(inbox,{}).get('settings',{}).get('swipe_pages',False)
         if 'settings' in layout and 'rotation' not in data.get('settings',{}):
             layout['settings']['rotation']=self.layouts.get(inbox,{}).get('settings',{}).get('rotation',0)
-        if layout.get('settings',{}).get('rotation',0) and screen.get('board')!='guition':
+        if layout.get('settings',{}).get('rotation',0) and (screen.get('board') not in BIG_BOARDS or screen.get('board') in FIXED_ROTATION_BOARDS):
             raise ValueError(t('addon.errors.settings.rotation'))
         # A page from before an option existed sends its tiles without it. It never sends a navigation tile twice
         # (firmware 0.2.65+), so a copy keeps exactly what it was sent with.
@@ -1324,7 +1324,7 @@ class Manager:
             message['swipe_pages'] = layout['settings'].get('swipe_pages',False)
             message['auto_home'] = layout['settings'].get('auto_home',True)
             message['auto_home_seconds'] = layout['settings'].get('auto_home_seconds',120)
-            if screen.get('board')=='guition':
+            if screen.get('board') in BIG_BOARDS:
                 message['rotation'] = layout['settings'].get('rotation',0)
         # The clock and the number format of Settings -> Language & region (app 0.2.90), the same on every screen; firmware
         # before 0.2.76 ignores both and keeps a clock setting of its own.

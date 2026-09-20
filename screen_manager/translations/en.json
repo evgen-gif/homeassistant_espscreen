@@ -1576,6 +1576,8 @@
       "board": "Which screen do you have?",
       "board_cyd": "CYD · 2.8 inch",
       "board_guition": "Guition · 4 inch",
+      "board_panel7": "Guition · 7 inch",
+      "board_panel10": "Guition · 10 inch",
       "name": "Name",
       "name_placeholder": "Living room screen",
       "device_name": "Device name",

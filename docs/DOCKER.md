@@ -6,7 +6,7 @@ the ESPHome CLI included. On Home Assistant OS, follow the
 [normal installation](../README.md#installing-from-home-assistant) instead.
 
 This route is new. If something doesn't work on your setup, please
-[open an issue](https://github.com/MaxGramser/homeassistant_espscreen/issues).
+[open an issue](https://github.com/evgen-gif/homeassistant_espscreen/issues).
 
 ## What you need
 

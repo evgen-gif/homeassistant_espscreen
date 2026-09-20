@@ -1576,6 +1576,8 @@
       "board": "Welk scherm heb je?",
       "board_cyd": "CYD · 2,8 inch",
       "board_guition": "Guition · 4 inch",
+      "board_panel7": "Guition · 7 inch",
+      "board_panel10": "Guition · 10 inch",
       "name": "Naam",
       "name_placeholder": "Scherm woonkamer",
       "device_name": "Apparaatnaam",

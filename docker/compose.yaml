@@ -1,5 +1,5 @@
 # ESP Screen Manager for Home Assistant Container (Docker), without the Supervisor.
-# Guide: https://github.com/MaxGramser/homeassistant_espscreen/blob/main/docs/DOCKER.md
+# Guide: https://github.com/evgen-gif/homeassistant_espscreen/blob/main/docs/DOCKER.md
 #
 # Next to this file, create `ha_token` with a long-lived access token, then:
 #   docker compose up -d --build
@@ -9,7 +9,7 @@ services:
     container_name: esp-screens
     build:
       # The same image as the Home Assistant app, built from the main branch.
-      context: https://github.com/MaxGramser/homeassistant_espscreen.git#main:screen_manager
+      context: https://github.com/evgen-gif/homeassistant_espscreen.git#main:screen_manager
     restart: unless-stopped
     # A small init as process 1, like the Home Assistant app gets: it passes on docker stop and reaps finished builds.
     init: true
