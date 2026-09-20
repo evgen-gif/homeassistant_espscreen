@@ -108,7 +108,7 @@ class PackageTests(unittest.TestCase):
         self.assertGreater(len(shared), 100)
         for board, defined in names.items():
             own = defined - shared
-            self.assertTrue(all(re.match(r'(TOUCH_AFFINE_|TOUCH_CAL_|EDGE_SWIPE_|ALERT_\w*IMAGE|CAMERA_)', n) for n in own), f'{board}: {sorted(own)}')
+            self.assertTrue(all(re.match(r'(TOUCH_AFFINE_|TOUCH_CAL_|EDGE_SWIPE_|ALERT_\w*IMAGE|CAMERA_|BOOT_LOGO|WEATHER_ICON_DIR)', n) for n in own), f'{board}: {sorted(own)}')
 
     def test_the_checker_refuses_a_fixed_home_assistant_subscription(self):
         source = (ROOT / 'tools/check_packages.py').read_text()

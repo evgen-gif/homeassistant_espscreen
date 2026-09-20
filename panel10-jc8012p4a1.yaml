@@ -8,6 +8,7 @@
 # the secrets (api_encryption_key, ota_password, Wi-Fi) from secrets.yaml and the components of this checkout.
 substitutions:
   FONT_DIR: "fonts"                                # the fonts next to this file
+  IMAGE_DIR: "images"                              # the pictures next to this file (weather icons, the logo)
 
 packages:
   core: !include packages/core.yaml

@@ -20,7 +20,7 @@ import profiles  # noqa: E402
 ROOT = profiles.ROOT
 PLACEHOLDER = re.compile(r'\$\{([A-Z_][A-Z0-9_]*)\}')
 # Defined by the entry files (the fonts' place) or by ESP Screen Manager's screen YAML.
-FROM_ENTRY = {'FONT_DIR'}
+FROM_ENTRY = {'FONT_DIR', 'IMAGE_DIR'}   # IMAGE_DIR: the P4 profiles' pictures (SDS fork)
 
 
 def included(path):
@@ -71,7 +71,7 @@ def main():
     for a in boards:
         for b in boards:
             only = board_names[a] - board_names[b]
-            only -= {name for name in only if name.startswith(('TOUCH_AFFINE_', 'TOUCH_CAL_', 'EDGE_SWIPE_', 'ALERT_CARD_H_IMAGE', 'ALERT_IMAGE_', 'ALERT_SUBTITLE_H_IMAGE', 'CAMERA_'))}
+            only -= {name for name in only if name.startswith(('TOUCH_AFFINE_', 'TOUCH_CAL_', 'EDGE_SWIPE_', 'ALERT_CARD_H_IMAGE', 'ALERT_IMAGE_', 'ALERT_SUBTITLE_H_IMAGE', 'CAMERA_', 'BOOT_LOGO', 'WEATHER_ICON_DIR'))}
             if only:
                 fail(f'{profiles.BOARDS[a].name} defines {sorted(only)}, which {profiles.BOARDS[b].name} lacks: a board-only name belongs in that board\'s own sections, a shared one in both')
     unused = core_names - used

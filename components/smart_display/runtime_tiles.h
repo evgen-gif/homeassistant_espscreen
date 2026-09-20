@@ -67,6 +67,11 @@ inline void go_to_page(int page);
 inline const lv_font_t *watch_value_font = nullptr, *watch_icon_font = nullptr;
 // Big digits for the clock card; the board profile sets it with the local time source.
 inline const lv_font_t *clock_font = nullptr;
+// A board's own pictures (SDS fork, 2026-09-20): a coloured weather icon per Home Assistant condition for the forecast
+// cards (nullptr: the MDI glyph as before), and a logo above the words of the starting screen. Both stay empty on a
+// board without them; the P4 panels set them in BOOT_ENABLED_HOOK.
+inline std::function<const lv_image_dsc_t *(const std::string &condition)> weather_image;
+inline const lv_image_dsc_t *boot_logo = nullptr;
 // Text in the -/+ pill and the run key of direct controls; the board profile sets it.
 inline const lv_font_t *control_font = nullptr;
 // The smallest regular text (sublabel): axis labels and the legend of the history card.
@@ -2498,6 +2503,7 @@ inline unsigned smooth(const lv_point_precise_t *in,unsigned n,lv_point_precise_
 }
 inline lv_obj_t *part_label(Widgets &w,unsigned i,const lv_font_t *font,int x,int y,int width,lv_text_align_t align,const std::string &text) {
   auto *&p=w.parts[i];
+  if(p && !lv_obj_check_type(p,&lv_label_class)){lv_obj_delete(p);p=nullptr;}   // a picture held this index (weather_part)
   if(!p){p=lv_label_create(w.extra);lv_label_set_long_mode(p,LV_LABEL_LONG_CLIP);lv_obj_remove_flag(p,LV_OBJ_FLAG_CLICKABLE);}
   set_font(p,font);set_text_align(p,align);
   lv_obj_set_pos(p,x,y);lv_obj_set_size(p,std::max(1,width),lv_font_get_line_height(font));label(p,text);return p;
@@ -2506,6 +2512,23 @@ inline lv_obj_t *part_dot(Widgets &w,unsigned i,int x,int y,int size) {
   auto *&p=w.parts[i];
   if(!p){p=lv_obj_create(w.extra);lv_obj_remove_style_all(p);lv_obj_set_style_bg_opa(p,LV_OPA_COVER,0);lv_obj_set_style_radius(p,LV_RADIUS_CIRCLE,0);lv_obj_remove_flag(p,LV_OBJ_FLAG_CLICKABLE);lv_obj_remove_flag(p,LV_OBJ_FLAG_SCROLLABLE);}
   lv_obj_set_pos(p,x,y);lv_obj_set_size(p,size,size);return p;
+}
+// A picture in a box: scaled to the box's height, centred in its width (the board's weather icons).
+inline lv_obj_t *part_image(Widgets &w,unsigned i,const lv_image_dsc_t *dsc,int x,int y,int width,int height) {
+  auto *&p=w.parts[i];
+  if(p && !lv_obj_check_type(p,&lv_image_class)){lv_obj_delete(p);p=nullptr;}
+  if(!p){p=lv_image_create(w.extra);lv_obj_remove_flag(p,LV_OBJ_FLAG_CLICKABLE);lv_obj_remove_flag(p,LV_OBJ_FLAG_SCROLLABLE);}
+  if(lv_image_get_src(p)!=dsc)lv_image_set_src(p,dsc);
+  const int native=dsc->header.h>0?dsc->header.h:1,scale=std::max(16,height*256/native),shown=native*scale/256;
+  lv_image_set_scale(p,scale);lv_image_set_inner_align(p,LV_IMAGE_ALIGN_TOP_LEFT);
+  lv_obj_set_size(p,shown,shown);lv_obj_set_pos(p,x+std::max(0,(width-shown)/2),y);
+  lv_obj_remove_flag(p,LV_OBJ_FLAG_HIDDEN);return p;
+}
+// The weather icon of a condition: the board's picture when it has one for it, else the MDI glyph in the given font.
+inline lv_obj_t *weather_part(Widgets &w,unsigned i,const lv_font_t *font,int x,int y,int width,lv_text_align_t align,const std::string &condition,bool available=true) {
+  const lv_image_dsc_t *dsc=available && weather_image?weather_image(condition):nullptr;
+  if(dsc)return part_image(w,i,dsc,x,y,width,lv_font_get_line_height(font));
+  return part_label(w,i,font,x,y,width,align,available?weather_icon(condition):"\U000F0595");
 }
 // Points are relative to (x,y): the line object then covers only its own rectangle.
 inline lv_obj_t *part_line(Widgets &w,unsigned i,lv_point_precise_t *points,unsigned count,int width,int x=0,int y=0) {
@@ -2654,7 +2677,7 @@ inline void render_forecast(Widgets &w,const Tile &t,bool large,int width,int he
       const auto &h=t.extra().hours[j];int x=j*column;
       char temp[16];if(std::isfinite(h.temp))snprintf(temp,sizeof(temp),"%.0f°",h.temp);else temp[0]=0;
       for(unsigned k=18+3*j;k<21+3*j;++k)if(w.parts[k])lv_obj_remove_flag(w.parts[k],LV_OBJ_FLAG_HIDDEN);
-      part_label(w,18+3*j,day_icon,x,y0+day_h,column,LV_TEXT_ALIGN_CENTER,weather_icon(h.condition));
+      weather_part(w,18+3*j,day_icon,x,y0+day_h,column,LV_TEXT_ALIGN_CENTER,h.condition);
       part_label(w,19+3*j,w.value_font,x,y0+day_h+icon_col,column,LV_TEXT_ALIGN_CENTER,temp);
       part_label(w,20+3*j,title_font,x,y0,column,LV_TEXT_ALIGN_CENTER,screen_text::clock_text(h.time,screen_settings::current.clock_24h!=0,true));
     }
@@ -2662,8 +2685,8 @@ inline void render_forecast(Widgets &w,const Tile &t,bool large,int width,int he
   height=top_h;
   int block=std::max(icon_h,temp_h)+2+text_h,y=std::max(0,(height-block)/2);
   char b[24];snprintf(b,sizeof(b),"%.0f°",t.current);
-  auto *icon=part_label(w,0,w.icon_font,clock_w,y+(std::max(icon_h,temp_h)-icon_h)/2,icon_h+4,LV_TEXT_ALIGN_LEFT,t.available()?weather_icon(t.state):"\U000F0595");
-  lv_obj_set_width(icon,lv_font_get_line_height(w.icon_font)+4);
+  auto *icon=weather_part(w,0,w.icon_font,clock_w,y+(std::max(icon_h,temp_h)-icon_h)/2,icon_h+4,LV_TEXT_ALIGN_LEFT,t.state,t.available());
+  if(lv_obj_check_type(icon,&lv_label_class))lv_obj_set_width(icon,lv_font_get_line_height(w.icon_font)+4);
   part_label(w,1,temp_font,clock_w+icon_h+6,y+(std::max(icon_h,temp_h)-temp_h)/2,left-icon_h-6,LV_TEXT_ALIGN_LEFT,std::isfinite(t.current)?b:"");
   // Home Assistant's word for the weather can be long ("częściowe zachmurzenie"): it ends in an ellipsis before the days.
   auto *condition=part_label(w,2,w.value_font,clock_w,y+std::max(icon_h,temp_h)+2,left-4,LV_TEXT_ALIGN_LEFT,weather_text(t.state));
@@ -2676,13 +2699,13 @@ inline void render_forecast(Widgets &w,const Tile &t,bool large,int width,int he
     if(large){
       int rows=day_h+icon_col+text_h,top=std::max(0,(height-rows)/2);
       part_label(w,3+k*3,title_font,x,top,column,LV_TEXT_ALIGN_CENTER,has?f.day:"");
-      part_label(w,4+k*3,day_icon,x,top+day_h,column,LV_TEXT_ALIGN_CENTER,has?weather_icon(f.condition):"");
+      if(has)weather_part(w,4+k*3,day_icon,x,top+day_h,column,LV_TEXT_ALIGN_CENTER,f.condition);else part_label(w,4+k*3,day_icon,x,top+day_h,column,LV_TEXT_ALIGN_CENTER,"");
       part_label(w,5+k*3,w.value_font,x,top+day_h+icon_col,column,LV_TEXT_ALIGN_CENTER,temps);
     }else{
       // Two rows on the CYD: day beside its icon, then the high/low pair.
       int rows=std::max(day_h,icon_col)+text_h,top=std::max(0,(height-rows)/2),day_w=column-icon_col-2;
       part_label(w,3+k*3,title_font,x,top+(std::max(day_h,icon_col)-day_h)/2,day_w,LV_TEXT_ALIGN_RIGHT,has?f.day:"");
-      part_label(w,4+k*3,day_icon,x+day_w+2,top,icon_col,LV_TEXT_ALIGN_LEFT,has?weather_icon(f.condition):"");
+      if(has)weather_part(w,4+k*3,day_icon,x+day_w+2,top,icon_col,LV_TEXT_ALIGN_LEFT,f.condition);else part_label(w,4+k*3,day_icon,x+day_w+2,top,icon_col,LV_TEXT_ALIGN_LEFT,"");
       part_label(w,5+k*3,w.value_font,x,top+std::max(day_h,icon_col),column,LV_TEXT_ALIGN_CENTER,temps);
     }
   }
@@ -3377,7 +3400,7 @@ inline void render_slot(size_t slot) {
   // The media tile (firmware 0.2.64+) paints its own parts on every render: keys, the bar and the cover's placeholder
   // in the media colours, not the card's.
   for(unsigned i=0;i<w.parts.size() && w.extra_mode!="media";++i){
-    auto *p=w.parts[i];if(!p)continue;
+    auto *p=w.parts[i];if(!p || lv_obj_check_type(p,&lv_image_class))continue;
     bool muted=w.extra_mode=="forecast" ? i>=2 && i%3==2 : w.extra_mode=="clockcast" ? (i>=2 && i<30 && i%3==2) || i==31 : w.extra_mode=="sunpath" ? i>=1 : w.extra_mode=="calendar" ? i==15||i==17 : i==16;
     if(lv_obj_check_type(p,&lv_label_class))set_color(p,LV_STYLE_TEXT_COLOR,muted?value_color:title_color);
     else if(w.extra_mode=="sunpath")continue;
@@ -3407,7 +3430,7 @@ inline uint32_t fill_step_ms=0;
 inline bool fill_cards(size_t cards);
 // The starting screen (firmware 0.2.73+): what the screen waits for in the middle of the page with a spinner under it,
 // until the first layout arrives. The first render() makes it and the first layout deletes it, spinner and all.
-inline lv_obj_t *boot_panel = nullptr, *boot_text = nullptr, *boot_spinner = nullptr;
+inline lv_obj_t *boot_panel = nullptr, *boot_text = nullptr, *boot_spinner = nullptr, *boot_image = nullptr;
 inline void boot_status(lv_obj_t *page, const char *text) {
   const int width = lv_display_get_horizontal_resolution(lv_obj_get_display(page));
   const bool large = width >= 480;
@@ -3429,13 +3452,21 @@ inline void boot_status(lv_obj_t *page, const char *text) {
     lv_obj_set_width(boot_text, text_width);
     boot_spinner = spinner_create(boot_panel, ring, large ? 5 : 4);
   }
+  // The board's logo (boot_logo) above the words: the block of logo, text and spinner sits in the middle of the page.
+  if (boot_logo && boot_logo->header.h > 1 && !boot_image) {   // a 1x1 picture means no logo
+    boot_image = lv_image_create(boot_panel);
+    lv_image_set_src(boot_image, boot_logo);
+    lv_obj_remove_flag(boot_image, LV_OBJ_FLAG_CLICKABLE);
+  }
   if (strcmp(lv_label_get_text(boot_text), text) == 0) return;
   lv_label_set_text(boot_text, text);
   // The text and the spinner as one block in the middle of the page.
   lv_point_t size;
   lv_text_get_size(&size, text, font, 0, 0, text_width, LV_TEXT_FLAG_NONE);
-  lv_obj_align(boot_text, LV_ALIGN_CENTER, 0, -(ring + gap) / 2);
-  if (boot_spinner) lv_obj_align(boot_spinner, LV_ALIGN_CENTER, 0, (size.y + gap) / 2);
+  const int logo_h = boot_image ? boot_logo->header.h + gap : 0;
+  lv_obj_align(boot_text, LV_ALIGN_CENTER, 0, logo_h / 2 - (ring + gap) / 2);
+  if (boot_spinner) lv_obj_align(boot_spinner, LV_ALIGN_CENTER, 0, logo_h / 2 + (size.y + gap) / 2);
+  if (boot_image) lv_obj_align(boot_image, LV_ALIGN_CENTER, 0, logo_h / 2 - (ring + gap) / 2 - size.y / 2 - gap - boot_logo->header.h / 2);
 }
 // Before the first layout the screen is starting: HA connects, then ESP Screens sends the tiles.
 inline void render(lv_obj_t *room) {

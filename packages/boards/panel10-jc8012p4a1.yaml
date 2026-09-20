@@ -25,6 +25,9 @@ substitutions:
   SLIDER_EDGE_SNAP_PX: "67"
   DEVICE_NAME: "panel10-new"
   DEVICE_FRIENDLY_NAME: "My 10-inch panel"
+  WEATHER_ICON_DIR: "${IMAGE_DIR}/weather"       # the coloured weather icons (see image: below)
+  BOOT_LOGO: "${IMAGE_DIR}/sds-logo.png"           # the logo of the starting screen; images/no-logo.png for none
+  BOOT_LOGO_SIZE: "500x302"                       # how big it is drawn (the PNG is resized to this)
 
   DISPLAY_W: "1280"
   DISPLAY_H: "800"
@@ -225,7 +228,22 @@ substitutions:
     id(last_use_ms) = millis();
     id(display_dimmed) = false;
   # right after runtime_tiles::enabled = true, before the settings load
-  BOOT_ENABLED_HOOK: ""
+  BOOT_ENABLED_HOOK: |-
+    runtime_tiles::boot_logo = id(boot_logo_image)->get_lv_image_dsc();
+    runtime_tiles::weather_image = [](const std::string &c) -> const lv_image_dsc_t * {
+      // Home Assistant's conditions on the panel's own coloured icons; the rest keep the MDI glyph.
+      if (c == "sunny") return id(wx_sunny)->get_lv_image_dsc();
+      if (c == "partlycloudy") return id(wx_partlycloudy)->get_lv_image_dsc();
+      if (c == "cloudy") return id(wx_cloudy)->get_lv_image_dsc();
+      if (c == "rainy" || c == "hail") return id(wx_rainy)->get_lv_image_dsc();
+      if (c == "pouring") return id(wx_pouring)->get_lv_image_dsc();
+      if (c == "snowy" || c == "snowy-rainy") return id(wx_snowy)->get_lv_image_dsc();
+      if (c == "fog") return id(wx_fog)->get_lv_image_dsc();
+      if (c == "clear-night") return id(wx_clear_night)->get_lv_image_dsc();
+      if (c == "lightning" || c == "lightning-rainy") return id(wx_lightning)->get_lv_image_dsc();
+      if (c == "windy" || c == "windy-variant") return id(wx_windy)->get_lv_image_dsc();
+      return nullptr;
+    };
   # the paint style only this board has (theme::paints)
   BOARD_PAINT_FILL: "theme::fill(id(paint_camera), Paint::camera);"
   # in runtime_tiles::dismiss, after the detail card closes
@@ -423,6 +441,56 @@ font:
     glyphsets: [GF_Cyrillic_Core]
   - id: !extend sublabel_big
     glyphsets: [GF_Cyrillic_Core]
+
+# Pictures (SDS fork): coloured weather icons for the forecast and clock cards (WEATHER_ICON_DIR: ten PNGs named after
+# Home Assistant's conditions, 48 px, any set with these names does) and a logo above the words of the starting screen
+# (BOOT_LOGO and BOOT_LOGO_SIZE; images/no-logo.png for none). A screen's own YAML overrides these substitutions to
+# brand the panel; runtime_tiles takes the pictures from BOOT_ENABLED_HOOK, a condition without one keeps its MDI glyph.
+image:
+  - file: "${WEATHER_ICON_DIR}/sunny.png"
+    id: wx_sunny
+    type: RGB565
+    transparency: alpha_channel
+  - file: "${WEATHER_ICON_DIR}/partlycloudy.png"
+    id: wx_partlycloudy
+    type: RGB565
+    transparency: alpha_channel
+  - file: "${WEATHER_ICON_DIR}/cloudy.png"
+    id: wx_cloudy
+    type: RGB565
+    transparency: alpha_channel
+  - file: "${WEATHER_ICON_DIR}/rainy.png"
+    id: wx_rainy
+    type: RGB565
+    transparency: alpha_channel
+  - file: "${WEATHER_ICON_DIR}/pouring.png"
+    id: wx_pouring
+    type: RGB565
+    transparency: alpha_channel
+  - file: "${WEATHER_ICON_DIR}/snowy.png"
+    id: wx_snowy
+    type: RGB565
+    transparency: alpha_channel
+  - file: "${WEATHER_ICON_DIR}/fog.png"
+    id: wx_fog
+    type: RGB565
+    transparency: alpha_channel
+  - file: "${WEATHER_ICON_DIR}/clear-night.png"
+    id: wx_clear_night
+    type: RGB565
+    transparency: alpha_channel
+  - file: "${WEATHER_ICON_DIR}/lightning.png"
+    id: wx_lightning
+    type: RGB565
+    transparency: alpha_channel
+  - file: "${WEATHER_ICON_DIR}/windy.png"
+    id: wx_windy
+    type: RGB565
+    transparency: alpha_channel
+  - file: "${BOOT_LOGO}"
+    id: boot_logo_image
+    type: RGB565
+    resize: ${BOOT_LOGO_SIZE}
 
 text_sensor:
   - platform: template

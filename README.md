@@ -1,3 +1,53 @@
+# ESP Screens — SDS fork for the ESP32-P4 panels
+
+This is a fork of [MaxGramser/homeassistant_espscreen](https://github.com/MaxGramser/homeassistant_espscreen) by
+[SDS — Smart Digital Solutions](https://sds.kiev.ua), Kyiv. Everything the original does, plus what our wall panels needed.
+The original README follows below; the fork's own versions count from 0.2.190 so they never meet the original's numbers.
+
+**What the fork adds**
+
+- **Two more screens: the Guition 7-inch (JC1060P470C, 1024 × 600) and 10-inch (JC8012P4A1, 1280 × 800) ESP32-P4 panels**,
+  with the ESP32-C6 Wi-Fi link, MIPI-DSI display and capacitive touch (GT911 / GSL3680). The 10-inch has a portrait matrix
+  that LVGL turns a quarter. Profiles `panel7` and `panel10`, entry files `panel7-jc1060p470c.yaml` and
+  `panel10-jc8012p4a1.yaml`. Both boot on this early P4 silicon, where only 123 KB of internal memory exist before the
+  scheduler runs: a 16 KB main stack and the Wi-Fi link's buffers in PSRAM (see the profiles' `sdkconfig_options`).
+- **Clock & weather**: a weather tile display with the time and the date at its left, then the current conditions and
+  the five coming days; a full page adds four hour columns. Under the tile's **Display**, wherever the forecast is.
+- **Coloured weather icons and a logo, yours to change.** The P4 profiles draw the weather with ten PNG icons
+  (`images/weather/`, named after Home Assistant's conditions) and show a logo above the words of the starting screen.
+  A screen's own YAML points them elsewhere:
+
+  ```yaml
+  substitutions:
+    WEATHER_ICON_DIR: "https://example.com/my-icons"   # ten PNGs: sunny.png, partlycloudy.png, cloudy.png, rainy.png,
+                                                        # pouring.png, snowy.png, fog.png, clear-night.png, lightning.png, windy.png
+    BOOT_LOGO: "https://example.com/my-logo.png"        # or images/no-logo.png for none
+    BOOT_LOGO_SIZE: "420x254"
+  ```
+
+- **Cyrillic on the screen, Russian and Ukrainian texts.** The P4 fonts carry the Cyrillic core set, and
+  `screen_manager/translations/ru.json` and `uk.json` speak on the screens (`LANGUAGE: "ru"` or `"uk"` in a screen's
+  substitutions, or ESP Screens → Settings → Language & region). The editor and the app's messages in these languages
+  are still to come.
+- Larger clock digits on the big screens (64 / 72 px) and the screen type sensor that tells the app which board it is.
+
+**Installing the fork:** in Home Assistant → Settings → Add-ons → Add-on store → ⋮ → Repositories, add
+`https://github.com/evgen-gif/homeassistant_espscreen`, install **ESP Screen Manager** from it, then follow the original
+guide below. A screen already running ESPHome takes the fork as a package in its own YAML:
+
+```yaml
+packages:
+  display:
+    url: https://github.com/evgen-gif/homeassistant_espscreen
+    ref: main
+    files: [packages/panel7.yaml]     # or packages/panel10.yaml, cyd.yaml, guition.yaml
+    refresh: 0s
+```
+
+The 2.8-inch CYD and the 4-inch Guition build from this fork unchanged.
+
+---
+
 # Home Assistant ESP Screens
 
 Thank you! I work on this project with a lot of love, and every bit of support helps. I truly love the Home Assistant community.
@@ -185,6 +235,8 @@ while it keeps your country's clock and numbers.
 | --- | --- | --- |
 | CYD ESP32-2432S028 | 320 × 240 | ILI9341 / resistive XPT2046 |
 | Guition ESP32-S3-4848S040, 4 inch | 480 × 480 | ST7701S RGB / capacitive GT911 |
+| Guition JC1060P470C, 7 inch (ESP32-P4), this fork | 1024 × 600 | JD9165 MIPI-DSI / capacitive GT911 |
+| Guition JC8012P4A1, 10.1 inch (ESP32-P4), this fork | 1280 × 800 (portrait matrix, turned) | JD9365 MIPI-DSI / capacitive GSL3680 |
 
 Use these exact board variants: similar-looking product names can have different
 controllers or connectors. Wallbox relays are not controlled.

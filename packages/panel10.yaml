@@ -7,6 +7,7 @@
 # the files fit together. guition-4848s040.yaml builds the same two files from a checkout.
 substitutions:
   FONT_DIR: "https://raw.githubusercontent.com/evgen-gif/homeassistant_espscreen/main/fonts"
+  IMAGE_DIR: "https://raw.githubusercontent.com/evgen-gif/homeassistant_espscreen/main/images"
 
 packages:
   core: !include core.yaml
