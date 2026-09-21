@@ -1,3 +1,12 @@
+## 0.2.191 (firmware 0.2.177)
+
+The energy cards: a gauge, a battery and the power flow of a hybrid inverter, for any numeric sensor.
+
+- **Gauge.** A three-quarter arc with the value and its unit inside, the name above. Under the tile's **Display** for a sensor; **Min** and **Max** set the arc's ends (a percentage takes 0 to 100, else the sensor's own range), **Amber from** and **Red from** colour the arc past those values. Give the zones the other way round (amber from 40, red from 20) for a charge that must not fall. On a wide card the arc sits at the left with the value beside it.
+- **Battery.** The tile is the state of charge in percent, drawn as a cell filled to the charge: red below the alarm, amber below the warning, green above, the charging green with a bolt while it charges. Name the **Battery power** sensor to see charging or discharging and its watts, and the **Capacity** in kWh for the time left at this rate ("9 h 40 min left", "1 h 20 min to full"). Tick **counts discharging as positive** for a Sunsynk or Deye sensor.
+- **Power flow.** The tile is the house load in watts; name the **Grid power**, the **Solar power**, the **Battery power** and the **Charge**. A wide card sets the four in a row, each with its power and what it does (from grid, to grid, charging, discharging); a full page draws the inverter in the middle with a line to each and dots that run along it the way the power goes, once a second while the screen is awake. Both take the tile's name as the house's.
+- The companions travel to the screen as one small block of watts, positive towards the house, so a screen on older firmware shows the plain card and nothing breaks. `esp_screens_add_tile` takes them too (`grid`, `solar`, `power`, `soc`, `capacity`, `flip`, `min`, `max`, `warn`, `alarm`); the Claude skill says how.
+
 ## 0.2.190 (firmware 0.2.176)
 
 The SDS fork: ESP Screens on the Guition ESP32-P4 panels, a clock beside the weather, and Russian and Ukrainian on the screens. Fork versions count from 0.2.190 so they never collide with the original project's numbers.

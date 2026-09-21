@@ -407,6 +407,20 @@
         "vertical": "Vertical",
         "horizontal": "Horizontal"
       }
+    },
+    "energy": {
+      "grid": "Rede",
+      "home": "Casa",
+      "battery": "Bateria",
+      "solar": "Solar",
+      "charging": "A carregar",
+      "discharging": "A descarregar",
+      "idle": "Parada",
+      "import": "da rede",
+      "export": "para a rede",
+      "to_full": "{time} até cheia",
+      "to_empty": "{time} restantes",
+      "off_grid": "Sem rede"
     }
   },
   "addon": {
@@ -1237,7 +1251,10 @@
       "graph": "gráfico",
       "digital": "relógio digital",
       "analog": "relógio analógico",
-      "sunpath": "trajetória do sol"
+      "sunpath": "trajetória do sol",
+      "gauge": "gauge",
+      "battery": "battery",
+      "energy": "power flow"
     },
     "sizes": {
       "single": "normal",
@@ -1269,7 +1286,10 @@
         "graph": "Gráfico",
         "sunpath": "Trajetória do sol",
         "no_graph": "O Home Assistant não tem valores numéricos para esta entidade, por isso o gráfico fica vazio. Escolha outra apresentação.",
-        "no_forecast": "Este serviço meteorológico não tem previsão diária no Home Assistant. Escolha outra apresentação."
+        "no_forecast": "Este serviço meteorológico não tem previsão diária no Home Assistant. Escolha outra apresentação.",
+        "gauge": "Gauge",
+        "battery": "Battery",
+        "energy": "Power flow"
       },
       "size": {
         "label": "Tamanho",
@@ -1314,6 +1334,26 @@
       "background": {
         "label": "Fundo pastel",
         "aria": "Fundo: {name}"
+      },
+      "energy": {
+        "label": "Energy",
+        "range": "Range",
+        "min": "Min",
+        "max": "Max",
+        "warn": "Amber from",
+        "alarm": "Red from",
+        "range_hint": "Leave empty for 0 to 100 (a percentage) or the sensor's own range. With the zones the other way round (amber from 40, red from 20) the colours come below the values, as for a charge.",
+        "power": "Battery power",
+        "grid": "Grid power",
+        "solar": "Solar power",
+        "soc": "Charge (%)",
+        "capacity": "Capacity (kWh)",
+        "none": "—",
+        "flip": "The battery sensor counts discharging as positive (Sunsynk, Deye)",
+        "flip_grid": "The grid sensor counts export as positive",
+        "battery_hint": "This tile is the charge in percent. Add the battery power to show charging or discharging, and the capacity for the time it has left.",
+        "energy_hint": "This tile is the house load in watts. Add the grid, the solar and the battery power and the charge; a wide card shows them in a row, a full page draws the flow.",
+        "needs_firmware": "Needs firmware 0.2.177 or newer on the screen."
       }
     },
     "tile_card": {

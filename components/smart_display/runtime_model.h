@@ -128,6 +128,12 @@ struct Extra {
   bool charging = false;
   // Cover (firmware 0.2.50+): the tilt of its slats, 0 closed to 100 open.
   float tilt = NAN;
+  // Energy cards (SDS fork, 2026-09-21): what the add-on reads from the companion entities of a battery or power-flow
+  // tile. Watts, positive towards the house: grid import, battery charging, solar production; the battery's charge in
+  // percent; and the minutes the battery still has at this rate (to empty while discharging, to full while charging),
+  // -1 when unknown.
+  float flow_grid = NAN, flow_bat = NAN, flow_pv = NAN, flow_soc = NAN;
+  int32_t flow_minutes = -1;
   // A tap that performs a Home Assistant action of the tile's own choosing (firmware 0.2.58+): the action, its data as
   // text, and the values Home Assistant renders itself (numbers, lists, true or false) as templates.
   std::string action;
@@ -142,7 +148,8 @@ struct Extra {
            remaining.empty() && !timer_end && media_title.empty() && media_artist.empty() && media_album.empty() &&
            media_picture.empty() && !media_duration && !media_position && !media_position_at && fan_speeds.empty() && fan_speed.empty() &&
            choices.empty() && room.empty() && !charging && std::isnan(tilt) && action.empty() && action_data.empty() &&
-           action_templates.empty() && state_word.empty() && effect.empty() && option_rows.empty() && number_rows.empty();
+           action_templates.empty() && state_word.empty() && effect.empty() && option_rows.empty() && number_rows.empty() &&
+           std::isnan(flow_grid) && std::isnan(flow_bat) && std::isnan(flow_pv) && std::isnan(flow_soc) && flow_minutes < 0;
   }
 };
 // The numbers of a clock text ("0:05:00", "07:45"), at most `max` of them, each after optional white space, up to the
@@ -227,6 +234,9 @@ struct Tile {
   float battery = NAN, volume = NAN;
   uint32_t supported = 0, background = 0;
   bool transparent = false;  // "Background: none": card fill and border hidden, contents unchanged.
+  // A gauge (SDS fork, 2026-09-21): the ends of its arc and the values where it turns amber and red; NAN keeps the
+  // defaults (0 to 100, or the sensor's own range, and no zones).
+  float gauge_min = NAN, gauge_max = NAN, gauge_warn = NAN, gauge_alarm = NAN;
   std::string icon;  // UTF-8 glyph of a chosen icon the icon fonts contain; empty keeps the domain icon.
   uint32_t revision = 0, pending_revision = 0;  // state_revision() fingerprints
   uint32_t pending_since = 0;

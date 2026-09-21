@@ -1074,7 +1074,9 @@ class Manager:
     def related_entities(self, tile):
         """Entities a card reads besides its own: a vacuum's cleaning mode and water selects and its battery sensor, a
         cover's battery sensor."""
-        from core import cover_related, vacuum_related
+        from core import cover_related, energy_related, vacuum_related
+        if tile['entity'].startswith('sensor.'):
+            return energy_related(tile)
         if tile['entity'].startswith('vacuum.'):
             return tuple(vacuum_related(tile['entity'], self.device_entries(tile['entity']), self.ha.states).values())
         if tile['entity'].startswith('cover.'):

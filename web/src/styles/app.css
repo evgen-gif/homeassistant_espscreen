@@ -231,6 +231,11 @@ a:hover { text-decoration: underline; }
 .f { display: grid; gap: 7px; }
 .f > .f-label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 .f input, .f select { font-size: 13px; }
+/* The energy cards' settings (SDS fork): four small numbers in a row, a labelled field stacked over its input. */
+.f .row4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.f .row4 label, .f .stack { display: grid; gap: 3px; }
+.f .row4 small, .f .stack small { color: var(--muted); }
+.f .row4 input, .f .stack input, .f .stack select { width: 100%; min-width: 0; }
 .row { display: flex; align-items: center; gap: 10px; padding: 7px 10px 7px 8px; border: 1px solid var(--line-strong); border-radius: 9px; background: var(--surface); width: 100%; text-align: left; }
 .row .av { width: 30px; height: 30px; border-radius: 8px; background: var(--surface-2); display: grid; place-items: center; font-size: 18px; flex: none; }
 .row .tx { flex: 1; min-width: 0; display: grid; }

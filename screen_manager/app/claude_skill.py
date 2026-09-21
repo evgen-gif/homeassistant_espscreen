@@ -125,6 +125,27 @@ When a navigation tile is on several pages, say which copy you mean: `page` or `
 
 Everything else shows its name and state, and opens a card of its own on a long press.
 
+The energy cards (SDS fork, firmware 0.2.177+) are displays of a numeric `sensor`:
+
+- `gauge`: a three-quarter arc with the value inside. Optional `min` and `max` (the arc's ends; a percentage takes 0 to 100), `warn` and `alarm` (the values the arc turns amber and red from; give them the other way round, `warn: 40, alarm: 20`, for a charge that must not fall).
+- `battery`: the tile is the state of charge in percent, drawn as a cell. `power` names the battery power sensor (W or kW), `capacity` the battery in kWh for the time left, `flip: true` when the sensor counts discharging as positive (Sunsynk, Deye). Optional `warn` and `alarm` as for a gauge (40 and 20 by default).
+- `energy`: the power flow. The tile is the house load in watts; `grid`, `solar`, `power` (the battery) and `soc` name the other sensors, `flip` and `flip_grid` turn a sensor that counts export or discharging as positive. A wide card shows the four in a row, a full page draws the flow with the inverter in the middle.
+
+```yaml
+actions:
+  - event: esp_screens_add_tile
+    event_data:
+      screen: living room
+      entity: sensor.ss_load_power
+      name: Home
+      display: energy
+      size: full
+      grid: sensor.ss_grid_power
+      power: sensor.ss_battery_power
+      soc: sensor.ss_battery_soc
+      flip: true
+```
+
 ### Reading a screen first
 
 Every screen also publishes what it shows, as `sensor.esp_screens_<device name>`: the state is the number of tiles, and the attributes hold `title`, `pages` and `tiles` with `entity`, `name`, `page`, `row`, `column`, `slot`, `size`, `controls` and `display` per tile (and `to_page` for a `screen.page_<n>` tile), every copy of a navigation tile on its own. Read that before moving things around, so you know what is already there and where.

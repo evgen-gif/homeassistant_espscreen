@@ -579,6 +579,10 @@ inline std::string receive(const std::string &payload) {
     tile.icon = icon && has_icon_glyph(icon) ? tile_icon::utf8(icon) : "";
     tile.tap = string(options["tap"]); if (tile.tap.empty()) tile.tap="auto";
     tile.display = string(options["display"]); if (tile.display.empty()) tile.display="standard";
+    // A gauge's range and zones (SDS fork): numbers, or the text an event typed ("80").
+    auto option_number=[](JsonVariant v){ if(v.is<float>()||v.is<int>())return number(v); if(v.is<const char*>()){char *end=nullptr;float f=strtof(v.as<const char*>(),&end);return end&&end!=v.as<const char*>()&&std::isfinite(f)?f:NAN;} return NAN; };
+    tile.gauge_min=option_number(options["min"]);tile.gauge_max=option_number(options["max"]);
+    tile.gauge_warn=option_number(options["warn"]);tile.gauge_alarm=option_number(options["alarm"]);
     tile.inline_control = string(options["inline"]); if (tile.inline_control.empty()) tile.inline_control="none";
     // Direct controls (0.2.19+): the manager sends only the set a wide card really shows.
     tile.controls = string(options["controls"], 16);
@@ -652,6 +656,12 @@ inline std::string receive(const std::string &payload) {
     tile.slider_reported(esphome::millis());
     tile.position = number(a["current_position"]);
     next.tilt = number(a["current_tilt_position"]);
+    // The energy cards' companions (SDS fork): {"e":{"g":grid W,"b":battery W,"p":solar W,"s":SOC %,"m":minutes}}.
+    auto e=extra["e"];
+    if(e.is<JsonObject>()){
+      next.flow_grid=number(e["g"]);next.flow_bat=number(e["b"]);next.flow_pv=number(e["p"]);next.flow_soc=number(e["s"]);
+      next.flow_minutes=e["m"].is<int>()?std::max(-1,e["m"].as<int>()):-1;
+    }
     tile.current = number(a["current_temperature"]);
     tile.target = number(a["temperature"]);
     tile.humidity = number(a["current_humidity"]);
@@ -2710,6 +2720,236 @@ inline void render_forecast(Widgets &w,const Tile &t,bool large,int width,int he
     }
   }
 }
+// ---- Energy cards (SDS fork, 2026-09-21): a gauge, a battery and the power flow of a hybrid inverter ----
+// A rounded box: the body of the battery, its fill and its terminal.
+inline lv_obj_t *part_box(Widgets &w,unsigned i,int x,int y,int width,int height,int radius,uint32_t fill,lv_opa_t fill_opa,uint32_t border,int border_w) {
+  auto *&p=w.parts[i];
+  if(p && (lv_obj_check_type(p,&lv_label_class)||lv_obj_check_type(p,&lv_arc_class))){lv_obj_delete(p);p=nullptr;}
+  if(!p){p=lv_obj_create(w.extra);lv_obj_remove_style_all(p);lv_obj_remove_flag(p,LV_OBJ_FLAG_CLICKABLE);lv_obj_remove_flag(p,LV_OBJ_FLAG_SCROLLABLE);}
+  lv_obj_set_pos(p,x,y);lv_obj_set_size(p,std::max(1,width),std::max(1,height));
+  lv_obj_set_style_radius(p,radius,0);lv_obj_set_style_bg_color(p,lv_color_hex(fill),0);lv_obj_set_style_bg_opa(p,fill_opa,0);
+  lv_obj_set_style_border_color(p,lv_color_hex(border),0);lv_obj_set_style_border_width(p,border_w,0);lv_obj_set_style_border_opa(p,border_w?LV_OPA_COVER:LV_OPA_TRANSP,0);
+  lv_obj_remove_flag(p,LV_OBJ_FLAG_HIDDEN);return p;
+}
+// A three-quarter arc from the lower left round to the lower right, `fraction` of it in `colour` over the track.
+inline lv_obj_t *part_arc(Widgets &w,unsigned i,int x,int y,int size,int stroke,float fraction,uint32_t colour) {
+  auto *&p=w.parts[i];
+  if(p && !lv_obj_check_type(p,&lv_arc_class)){lv_obj_delete(p);p=nullptr;}
+  if(!p){
+    p=lv_arc_create(w.extra);lv_obj_remove_style_all(p);lv_obj_remove_style(p,nullptr,LV_PART_KNOB);
+    lv_obj_remove_flag(p,LV_OBJ_FLAG_CLICKABLE);lv_obj_remove_flag(p,LV_OBJ_FLAG_SCROLLABLE);
+    lv_arc_set_bg_angles(p,135,45);lv_arc_set_rotation(p,0);lv_arc_set_mode(p,LV_ARC_MODE_NORMAL);lv_arc_set_range(p,0,1000);
+    lv_obj_set_style_arc_rounded(p,true,LV_PART_MAIN);lv_obj_set_style_arc_rounded(p,true,LV_PART_INDICATOR);
+    lv_obj_set_style_arc_opa(p,LV_OPA_COVER,LV_PART_MAIN);lv_obj_set_style_arc_opa(p,LV_OPA_COVER,LV_PART_INDICATOR);
+  }
+  lv_obj_set_pos(p,x,y);lv_obj_set_size(p,size,size);
+  lv_obj_set_style_arc_width(p,stroke,LV_PART_MAIN);lv_obj_set_style_arc_width(p,stroke,LV_PART_INDICATOR);
+  lv_obj_set_style_arc_color(p,theme::color(theme::TRACK),LV_PART_MAIN);lv_obj_set_style_arc_color(p,lv_color_hex(colour),LV_PART_INDICATOR);
+  lv_arc_set_value(p,std::lround(std::clamp(fraction,0.0f,1.0f)*1000));
+  lv_obj_remove_flag(p,LV_OBJ_FLAG_HIDDEN);return p;
+}
+// A part shown again after hide_part: part_label and part_dot keep the hidden flag they were given.
+inline lv_obj_t *shown(lv_obj_t *p){ if(lv_obj_has_flag(p,LV_OBJ_FLAG_HIDDEN))lv_obj_remove_flag(p,LV_OBJ_FLAG_HIDDEN); return p; }
+inline lv_obj_t *text_part(Widgets &w,unsigned i,const lv_font_t *font,int x,int y,int width,lv_text_align_t align,const std::string &text){ return shown(part_label(w,i,font,x,y,width,align,text)); }
+inline lv_obj_t *dot_part(Widgets &w,unsigned i,int x,int y,int size){ return shown(part_dot(w,i,x,y,size)); }
+inline void hide_part(Widgets &w,unsigned i){ if(w.parts[i] && !lv_obj_has_flag(w.parts[i],LV_OBJ_FLAG_HIDDEN))lv_obj_add_flag(w.parts[i],LV_OBJ_FLAG_HIDDEN); }
+inline void set_text_colour(lv_obj_t *p,uint32_t colour){ if(theme::of(lv_obj_get_style_text_color(p,LV_PART_MAIN))!=colour)lv_obj_set_style_text_color(p,lv_color_hex(colour),0); }
+inline uint32_t ink_colour(const Widgets &w){ return theme::of(lv_obj_get_style_text_color(w.title,LV_PART_MAIN)); }
+// "424 W", "1.2 kW", "-0.8 kW": a power in watts, in the screen's number format.
+inline std::string power_text(float watts) {
+  if(!std::isfinite(watts))return "—";
+  float a=std::fabs(watts);
+  if(a>=1000)return screen_text::decimal(watts/1000,a>=10000?0:1)+" kW";
+  return screen_text::decimal(std::round(watts),0)+" W";
+}
+// The colour of a value against its zones: amber past `warn`, red past `alarm`; with the zones the other way round
+// (a charge that must not fall) the colours come below them. Without zones the number's own teal.
+inline uint32_t zone_colour(float value,float warn,float alarm) {
+  const bool has_warn=std::isfinite(warn),has_alarm=std::isfinite(alarm);
+  if(!std::isfinite(value)||(!has_warn&&!has_alarm))return theme::ha::TEAL;
+  const bool rising=!(has_warn&&has_alarm)?true:warn<=alarm;
+  if(rising){
+    if(has_alarm&&value>=alarm)return theme::ha::RED;
+    if(has_warn&&value>=warn)return theme::ha::ORANGE;
+  }else{
+    if(value<=alarm)return theme::ha::RED;
+    if(value<=warn)return theme::ha::ORANGE;
+  }
+  return theme::ha::GREEN;
+}
+// Gauge: the name on top, a three-quarter arc from `min` to `max` (0 to 100 for a percentage) with the value and its
+// unit inside; a wide card keeps the arc at the left and sets the value beside it. Parts: 0 name, 1 arc, 2 value,
+// 3 unit, 4-5 the ends of the range.
+inline void render_gauge(Widgets &w,const Tile &t,bool large,int width,int height) {
+  begin_extra(w,"gauge",width,height);
+  const lv_font_t *title_font=w.title_font,*big=watch_value_font?watch_value_font:w.value_font,*small=small_font?small_font:title_font;
+  int title_h=lv_font_get_line_height(title_font),big_h=lv_font_get_line_height(big),unit_h=lv_font_get_line_height(w.value_font),small_h=lv_font_get_line_height(small);
+  float value=strtof(t.state.c_str(),nullptr);if(!std::isfinite(value))value=NAN;
+  float lo=std::isfinite(t.gauge_min)?t.gauge_min:0,hi=std::isfinite(t.gauge_max)?t.gauge_max:(t.unit=="%"?100:std::isfinite(value)&&std::fabs(value)>100?std::pow(10,std::ceil(std::log10(std::fabs(value)))):100);
+  if(hi<=lo)hi=lo+1;
+  float fraction=std::isfinite(value)?(value-lo)/(hi-lo):0;
+  uint32_t colour=theme::foreground(zone_colour(value,t.gauge_warn,t.gauge_alarm));
+  text_part(w,0,title_font,0,0,width,LV_TEXT_ALIGN_LEFT,t.name.empty()?t.entity:t.name);
+  int top=title_h+(large?2:0),room_h=height-top;
+  const bool beside=w.wide && width>height*2;
+  int size=std::min(beside?room_h:std::min(width,room_h),large?260:110);size=std::max(size,large?60:40);
+  int stroke=std::max(4,size/9);
+  int ax=beside?(large?8:2):(width-size)/2,ay=top+(room_h-size)/2;
+  part_arc(w,1,ax,ay,size,stroke,fraction,colour);
+  // The value in the arc's eye when it fits, else beside the arc on a wide card.
+  const bool inside=!beside && size-2*stroke>=big_h+unit_h-4;
+  const lv_font_t *value_font=inside||beside?big:w.value_font;int value_h=lv_font_get_line_height(value_font);
+  std::string text=std::isfinite(value)?screen_text::localize(t.state):t.state;
+  if(beside){
+    int x=ax+size+(large?18:8),vw=width-x;
+    auto *v=text_part(w,2,big,x,ay+(size-big_h-unit_h)/2,vw,LV_TEXT_ALIGN_LEFT,text);set_text_colour(v,colour);
+    auto *u=text_part(w,3,w.value_font,x,ay+(size-big_h-unit_h)/2+big_h,vw,LV_TEXT_ALIGN_LEFT,t.unit);set_text_colour(u,theme::hex(theme::MUTED));
+  }else{
+    int cy=ay+size/2-(value_h+(inside?unit_h:0))/2+(inside?0:size/4);
+    auto *v=text_part(w,2,value_font,ax,cy,size,LV_TEXT_ALIGN_CENTER,text);set_text_colour(v,colour);
+    auto *u=text_part(w,3,w.value_font,ax,cy+value_h,size,LV_TEXT_ALIGN_CENTER,inside?t.unit:"");set_text_colour(u,theme::hex(theme::MUTED));
+  }
+  // The range under the arc's open end, in the smallest font.
+  auto *l=text_part(w,4,small,ax,ay+size-small_h,size/2-stroke/2,LV_TEXT_ALIGN_LEFT,screen_text::decimal(lo,lo==std::floor(lo)?0:1));
+  auto *h=text_part(w,5,small,ax+size/2+stroke/2,ay+size-small_h,size/2-stroke/2,LV_TEXT_ALIGN_RIGHT,screen_text::decimal(hi,hi==std::floor(hi)?0:1));
+  set_text_colour(l,theme::hex(theme::MUTED));set_text_colour(h,theme::hex(theme::MUTED));
+}
+// Battery: a drawn cell filled to the charge (red below the alarm, amber below the warning, green above, the charging
+// green with a bolt while it charges), the percentage beside it, then what flows and how long that lasts. Parts:
+// 0 name, 1 body, 2 fill, 3 terminal, 4 bolt, 5 percent, 6 flow, 7 time left.
+inline void render_battery(Widgets &w,const Tile &t,bool large,int width,int height) {
+  begin_extra(w,"battery",width,height);
+  const lv_font_t *title_font=w.title_font,*big=watch_value_font?watch_value_font:w.value_font;
+  int title_h=lv_font_get_line_height(title_font),big_h=lv_font_get_line_height(big),text_h=lv_font_get_line_height(w.value_font);
+  float soc=strtof(t.state.c_str(),nullptr);if(!std::isfinite(soc))soc=NAN;
+  const auto &e=t.extra();
+  const bool charging=std::isfinite(e.flow_bat)&&e.flow_bat>=10,discharging=std::isfinite(e.flow_bat)&&e.flow_bat<=-10;
+  float warn=std::isfinite(t.gauge_warn)?t.gauge_warn:40,alarm=std::isfinite(t.gauge_alarm)?t.gauge_alarm:20;
+  uint32_t level=charging?theme::ha::CHARGING:std::isfinite(soc)?(soc<=alarm?theme::ha::RED:soc<=warn?theme::ha::ORANGE:theme::ha::GREEN):theme::ha::GREY;
+  text_part(w,0,title_font,0,0,width,LV_TEXT_ALIGN_LEFT,t.name.empty()?tr(txt::energy_battery):t.name);
+  int top=title_h+(large?4:2),room_h=height-top;
+  // The cell: as tall as the room allows, twice as wide as tall, its terminal a stub at the right.
+  int cell_h=std::min(room_h-(large?8:4),large?96:44),cell_w=cell_h*2,nub_w=std::max(3,cell_h/8),nub_h=cell_h/2,border=large?3:2,radius=large?10:5;
+  if(cell_w+nub_w>width*45/100){cell_w=width*45/100-nub_w;cell_h=std::max(large?36:22,cell_w/2);}
+  int cx=large?6:2,cy=top+(room_h-cell_h)/2;
+  uint32_t ink=ink_colour(w),outline=theme::hex(theme::SUBTLE);
+  part_box(w,1,cx,cy,cell_w,cell_h,radius,theme::hex(theme::TRACK),LV_OPA_COVER,outline,border);
+  int inner=border+(large?4:2),fill_w=std::isfinite(soc)?std::lround((cell_w-2*inner)*std::clamp(soc,0.0f,100.0f)/100):0;
+  if(fill_w>0)part_box(w,2,cx+inner,cy+inner,fill_w,cell_h-2*inner,std::max(2,radius-inner/2),theme::foreground(level),LV_OPA_COVER,0,0);else hide_part(w,2);
+  part_box(w,3,cx+cell_w,cy+(cell_h-nub_h)/2,nub_w,nub_h,std::max(1,nub_w/2),outline,LV_OPA_COVER,0,0);
+  const lv_font_t *bolt_font=large?w.icon_font:(mini_icon_font?mini_icon_font:w.icon_font);
+  if(charging&&bolt_font){int bh=lv_font_get_line_height(bolt_font);auto *b=text_part(w,4,bolt_font,cx,cy+(cell_h-bh)/2,cell_w,LV_TEXT_ALIGN_CENTER,"\U000F0241");set_text_colour(b,fill_w>cell_w/2?theme::hex(theme::ON_ACCENT):theme::foreground(level));}
+  else hide_part(w,4);
+  // Words at the right: the charge large, then the power and its direction, then the time it gives.
+  int x=cx+cell_w+nub_w+(large?18:8),tw=width-x;
+  std::string flow=charging?std::string(tr(txt::energy_charging))+" "+power_text(e.flow_bat):discharging?std::string(tr(txt::energy_discharging))+" "+power_text(-e.flow_bat):std::isfinite(e.flow_bat)?tr(txt::energy_idle):"";
+  std::string left=e.flow_minutes>0&&(charging||discharging)?fill(charging?txt::energy_to_full:txt::energy_to_empty,"time",history_view::duration(uint32_t(e.flow_minutes)*60)):"";
+  int lines=1+(flow.empty()?0:1)+(left.empty()?0:1),block=big_h+(flow.empty()?0:text_h)+(left.empty()?0:title_h);
+  if(block>room_h){left.clear();block=big_h+(flow.empty()?0:text_h);if(block>room_h){flow.clear();block=big_h;}}
+  int y=top+std::max(0,(room_h-block)/2);
+  auto *pct=text_part(w,5,big,x,y,tw,LV_TEXT_ALIGN_LEFT,std::isfinite(soc)?screen_text::percent(int(std::lround(soc))):t.state);set_text_colour(pct,ink);y+=big_h;
+  if(!flow.empty()){auto *f=text_part(w,6,w.value_font,x,y,tw,LV_TEXT_ALIGN_LEFT,flow);set_text_colour(f,theme::foreground(charging?theme::ha::CHARGING:discharging?theme::ha::ORANGE:theme::ha::GREY));y+=text_h;}else hide_part(w,6);
+  if(!left.empty()){auto *l=text_part(w,7,title_font,x,y,tw,LV_TEXT_ALIGN_LEFT,left);set_text_colour(l,theme::hex(theme::MUTED));}else hide_part(w,7);
+  (void)lines;
+}
+// Power flow: the grid, the sun, the battery and the house around the inverter. A double-width card is too low for
+// lines, so it sets the four in a row, each with its power and what it does; a full page draws the inverter in the
+// middle with a line to each and dots that run along it the way the power goes (once a second while the screen is
+// awake). Parts: 0 name; per node n (grid 0, solar 1, battery 2, home 3): 1+4n circle, 2+4n icon, 3+4n value, 4+4n
+// caption; 17 hub, 18 hub icon; 19+n line; 23+3n..25+3n the dots. Points 2n, 2n+1 the line of node n.
+struct FlowNode { const char *icon; uint32_t colour; std::string value, caption; float watts; bool shown; };
+inline void render_energy(Widgets &w,const Tile &t,bool large,int width,int height) {
+  const bool flow=w.full;
+  begin_extra(w,flow?"flow":"flowrow",width,height);
+  const lv_font_t *title_font=w.title_font,*value_font=flow&&watch_value_font?watch_value_font:w.value_font,*icon_font=w.icon_font;
+  int title_h=lv_font_get_line_height(title_font),value_h=lv_font_get_line_height(value_font),icon_h=lv_font_get_line_height(icon_font);
+  const auto &e=t.extra();
+  float load=strtof(t.state.c_str(),nullptr);if(!std::isfinite(load))load=NAN;
+  const float grid=e.flow_grid,bat=e.flow_bat,pv=e.flow_pv,soc=e.flow_soc;
+  const bool importing=std::isfinite(grid)&&grid>=10,exporting=std::isfinite(grid)&&grid<=-10;
+  const bool charging=std::isfinite(bat)&&bat>=10,discharging=std::isfinite(bat)&&bat<=-10;
+  uint32_t muted=theme::hex(theme::MUTED),ink=ink_colour(w);
+  std::array<FlowNode,4> nodes{{
+    {"\U000F0D3E",importing?theme::ha::BLUE:exporting?theme::ha::GREEN:theme::ha::GREY,power_text(std::isfinite(grid)?std::fabs(grid):NAN),
+      std::string(tr(txt::energy_grid))+(importing?std::string(" · ")+tr(txt::energy_import):exporting?std::string(" · ")+tr(txt::energy_export):""),grid,std::isfinite(grid)},
+    {"\U000F0A72",std::isfinite(pv)&&pv>=10?theme::ha::SUNNY:theme::ha::GREY,power_text(pv),tr(txt::energy_solar),pv,std::isfinite(pv)},
+    {charging?"\U000F0084":"\U000F0079",charging?theme::ha::CHARGING:discharging?theme::ha::ORANGE:theme::ha::GREY,
+      std::isfinite(soc)?screen_text::percent(int(std::lround(soc))):power_text(bat),
+      std::string(tr(txt::energy_battery))+(charging?" · "+power_text(bat):discharging?" · "+power_text(-bat):""),bat,std::isfinite(bat)||std::isfinite(soc)},
+    {"\U000F02DC",theme::ha::PURPLE,power_text(load),t.name.empty()?tr(txt::energy_home):t.name,load,true},
+  }};
+  text_part(w,0,title_font,0,0,width,LV_TEXT_ALIGN_LEFT,flow?(t.name.empty()?tr(txt::energy_home):t.name):"");
+  if(!flow){
+    // The row: the nodes that exist share the width; each is a tinted circle with its icon, the power under it, the words
+    // under that, all centred in its column.
+    for(unsigned n=0;n<4;++n)if(!nodes[n].shown)for(unsigned k=1+4*n;k<5+4*n;++k)hide_part(w,k);
+    for(unsigned k=17;k<35;++k)hide_part(w,k);
+    unsigned count=0;for(auto &n:nodes)if(n.shown)++count;
+    int column=width/std::max(1u,count),circle=std::min(large?56:32,std::max(24,height-value_h-title_h-(large?10:4)));
+    // Circle beside the words when the row is low (a double-width card on the P4 is 1000 by 150): the circle at the
+    // column's left, the power and the words stacked at its right.
+    const bool beside=height<circle+value_h+title_h+(large?10:4)||column>circle*4;
+    int i=0;
+    for(unsigned n=0;n<4;++n){
+      const auto &node=nodes[n];if(!node.shown)continue;
+      int x0=i*column;++i;uint32_t colour=theme::foreground(node.colour);
+      int block=beside?std::max(circle,value_h+title_h):circle+(large?6:2)+value_h+title_h,y=std::max(0,(height-block)/2);
+      int cxp=beside?x0+(large?8:4):x0+(column-circle)/2,cyp=beside?y+(block-circle)/2:y;
+      auto *c=dot_part(w,1+4*n,cxp,cyp,circle);lv_obj_set_style_bg_color(c,lv_color_hex(theme::tint(node.colour,large?60:70)),0);lv_obj_set_style_bg_opa(c,LV_OPA_COVER,0);
+      auto *ic=text_part(w,2+4*n,icon_font,cxp,cyp+(circle-icon_h)/2,circle,LV_TEXT_ALIGN_CENTER,node.icon);set_text_colour(ic,theme::icon(node.colour));
+      int tx=beside?cxp+circle+(large?10:6):x0,tw=beside?x0+column-tx:column,ty=beside?y+(block-value_h-title_h)/2:cyp+circle+(large?6:2);
+      auto *v=text_part(w,3+4*n,value_font,tx,ty,tw,beside?LV_TEXT_ALIGN_LEFT:LV_TEXT_ALIGN_CENTER,node.value);set_text_colour(v,node.watts!=0&&node.colour!=theme::ha::GREY?colour:ink);
+      auto *cap=text_part(w,4+4*n,title_font,tx,ty+value_h,tw,beside?LV_TEXT_ALIGN_LEFT:LV_TEXT_ALIGN_CENTER,node.caption);set_text_colour(cap,muted);
+      if(lv_label_get_long_mode(cap)!=LV_LABEL_LONG_DOT)lv_label_set_long_mode(cap,LV_LABEL_LONG_DOT);
+    }
+    return;
+  }
+  // The diagram: the inverter in the middle, the grid at the left, the house at the right, the sun above, the battery
+  // below. A line from each to the inverter; three dots on it step along once a second towards where the power goes.
+  int circle=large?96:56,hub=large?72:44,gap=large?12:6,top=title_h+gap,room_h=height-top;
+  int cxh=width/2,cyh=top+room_h/2;
+  int words_h=value_h+title_h;
+  struct Spot { int x,y; } spots[4]={{circle/2+(large?20:8),cyh},{cxh,top+circle/2},{cxh,top+room_h-words_h-gap-circle/2},{width-circle/2-(large?20:8),cyh}};
+  auto now_s=esphome::millis()/1000;
+  for(unsigned n=0;n<4;++n){
+    const auto &node=nodes[n];
+    if(!node.shown){for(unsigned k=1+4*n;k<5+4*n;++k)hide_part(w,k);hide_part(w,19+n);for(unsigned d=0;d<3;++d)hide_part(w,23+3*n+d);continue;}
+    uint32_t colour=theme::foreground(node.colour);
+    int cxp=spots[n].x-circle/2,cyp=spots[n].y-circle/2;
+    auto *c=dot_part(w,1+4*n,cxp,cyp,circle);lv_obj_set_style_bg_color(c,lv_color_hex(theme::tint(node.colour,large?60:70)),0);lv_obj_set_style_bg_opa(c,LV_OPA_COVER,0);
+    auto *ic=text_part(w,2+4*n,icon_font,cxp,cyp+(circle-icon_h)/2,circle,LV_TEXT_ALIGN_CENTER,node.icon);set_text_colour(ic,theme::icon(node.colour));
+    // The words: under the circle for the sun and the battery, beside it (outside) for the grid and the house.
+    int tw=n==0||n==3?width/2-circle-hub/2-(large?40:16):std::max(circle*2,width/3),tx,ty;lv_text_align_t align;
+    if(n==0){tx=cxp+circle+(large?12:6);ty=spots[n].y-words_h/2;align=LV_TEXT_ALIGN_LEFT;}
+    else if(n==3){tx=cxp-(large?12:6)-tw;ty=spots[n].y-words_h/2;align=LV_TEXT_ALIGN_RIGHT;}
+    else{tx=spots[n].x-tw/2;ty=n==1?cyp+circle+2:cyp+circle+2;align=LV_TEXT_ALIGN_CENTER;}
+    // The sun's words sit at its right, so the line down to the inverter stays clear.
+    if(n==1){tx=cxp+circle+(large?12:6);ty=spots[n].y-words_h/2;align=LV_TEXT_ALIGN_LEFT;tw=std::max(circle,width/2-cxh-circle/2-(large?20:8));}
+    auto *v=text_part(w,3+4*n,value_font,tx,ty,tw,align,node.value);set_text_colour(v,node.watts!=0&&node.colour!=theme::ha::GREY?colour:ink);
+    auto *cap=text_part(w,4+4*n,title_font,tx,ty+value_h,tw,align,node.caption);set_text_colour(cap,muted);
+    if(lv_label_get_long_mode(cap)!=LV_LABEL_LONG_DOT)lv_label_set_long_mode(cap,LV_LABEL_LONG_DOT);
+    // The line from the circle's edge to the inverter's edge, and the dots along it.
+    float dx=cxh-spots[n].x,dy=cyh-spots[n].y,len=std::sqrt(dx*dx+dy*dy);if(len<1)len=1;
+    float ux=dx/len,uy=dy/len;
+    lv_point_precise_t *line=w.points+2*n;
+    float x1=spots[n].x+ux*(circle/2+2),y1=spots[n].y+uy*(circle/2+2),x2=cxh-ux*(hub/2+2),y2=cyh-uy*(hub/2+2);
+    line[0]={(lv_value_precise_t)x1,(lv_value_precise_t)y1};line[1]={(lv_value_precise_t)x2,(lv_value_precise_t)y2};
+    const bool active=std::isfinite(node.watts)&&std::fabs(node.watts)>=10;
+    auto *ln=part_line(w,19+n,line,2,large?4:2);lv_obj_set_style_line_color(ln,lv_color_hex(active?colour:theme::hex(theme::TRACK)),0);lv_obj_remove_flag(ln,LV_OBJ_FLAG_HIDDEN);
+    // Towards the inverter: grid import, solar, a discharging battery; away from it: export, charging, and the house.
+    const bool inward=n==3?false:n==2?discharging:node.watts>0;
+    int dot=large?12:8;float span=std::sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
+    for(unsigned d=0;d<3;++d){
+      if(!active||!awake()){hide_part(w,23+3*n+d);continue;}
+      float phase=float((now_s+d*2)%6)/6.0f;if(!inward)phase=1-phase;
+      float px=x1+(x2-x1)*phase,py=y1+(y2-y1)*phase;
+      auto *p=dot_part(w,23+3*n+d,int(px)-dot/2,int(py)-dot/2,dot);lv_obj_set_style_bg_color(p,lv_color_hex(colour),0);lv_obj_set_style_bg_opa(p,LV_OPA_COVER,0);lv_obj_remove_flag(p,LV_OBJ_FLAG_HIDDEN);
+    }
+    (void)span;
+  }
+  auto *h=dot_part(w,17,cxh-hub/2,cyh-hub/2,hub);lv_obj_set_style_bg_color(h,lv_color_hex(theme::tint(theme::ha::AMBER,large?50:60)),0);lv_obj_set_style_bg_opa(h,LV_OPA_COVER,0);
+  auto *hi=text_part(w,18,icon_font,cxh-hub/2,cyh-icon_h/2,hub,LV_TEXT_ALIGN_CENTER,"\U000F0241");set_text_colour(hi,theme::icon(theme::ha::AMBER));
+}
 // Smoothed trend of the manager's 24 history samples with a soft fill beneath.
 inline void render_graph(Widgets &w,const Tile &t,bool large,int x,int y,int width,int height) {
   begin_extra(w,"graph",x+width,y+height);
@@ -3121,6 +3361,9 @@ inline void render_full(Widgets &w,const Tile &t,bool custom,bool clock,bool sun
     // The forecast and the sun path keep their board's layout (the CYD's two-row days); a taller dial is fine.
     if(clock)render_clock(w,t,large,content_w,content_h);
     else if(sunpath)render_sunpath(w,t,big,content_w,content_h);
+    else if(t.display=="gauge")render_gauge(w,t,big,content_w,content_h);
+    else if(t.display=="battery")render_battery(w,t,big,content_w,content_h);
+    else if(t.display=="energy")render_energy(w,t,big,content_w,content_h);
     else render_forecast(w,t,big,content_w,content_h);
     return;
   }
@@ -3256,7 +3499,10 @@ inline void render_slot(size_t slot) {
   bool clock=t.is_clock(), forecast=d=="weather" && (t.display=="forecast" || t.display=="clock_weather") && w.wide && t.extra().forecast.size()>0 && fresh() && t.available();
   bool sunpath=d=="sun" && t.display=="sunpath" && w.wide && !t.extra().sunrise.empty() && !t.extra().sunset.empty() && fresh() && t.available();
   bool graph=d=="sensor" && t.display=="graph" && t.has_history && !clock;
-  bool custom=clock||forecast||sunpath;
+  // The energy cards (SDS fork): a gauge and a battery on any card, the power flow on a wide one or a page. Without
+  // Home Assistant they fall back to the plain card, which says so.
+  bool energy_card=d=="sensor" && (t.display=="gauge" || t.display=="battery" || (t.display=="energy" && w.wide)) && fresh() && t.available();
+  bool custom=clock||forecast||sunpath||energy_card;
   if(!large_tile)pad_vertical(w.tile,watch||custom||graph?2:4);
   set_font(w.value,watch && watch_value_font ? watch_value_font : w.value_font);
   // Both text boxes are one line high; the sizes come from the styles, not from a layout pass.
@@ -3278,6 +3524,9 @@ inline void render_slot(size_t slot) {
     lap(swipe_profile::GEOMETRY);
     if(clock)render_clock(w,t,large_tile,content_w,content_h);
     else if(sunpath)render_sunpath(w,t,large_tile,content_w,content_h);
+    else if(t.display=="gauge")render_gauge(w,t,large_tile,content_w,content_h);
+    else if(t.display=="battery")render_battery(w,t,large_tile,content_w,content_h);
+    else if(t.display=="energy")render_energy(w,t,large_tile,content_w,content_h);
     else render_forecast(w,t,large_tile,content_w,content_h);
     lap(swipe_profile::CUSTOM);
   }else{
@@ -4052,6 +4301,8 @@ inline void tick() {
       auto &w=widgets[slot];if(!w.tile || w.index>=model.count || lv_obj_has_flag(w.tile,LV_OBJ_FLAG_HIDDEN))continue;
       const auto &t=model.tiles[w.index];
       if(((t.is_clock() || t.display=="clock_weather") && new_minute) || (t.domain()=="timer" && t.state=="active") || (t.domain()=="sun" && second%60==0))card(w.index);
+      // The power flow's dots step along their lines once a second while the screen is awake (SDS fork).
+      else if(w.extra_mode=="flow" && t.display=="energy" && awake())card(w.index);
       // A media tile over the whole page: its bar runs on while the track plays (firmware 0.2.64+).
       if(w.extra_mode=="media" && w.extra && !lv_obj_has_flag(w.extra,LV_OBJ_FLAG_HIDDEN) && w.parts[5] && !lv_obj_has_flag(w.parts[5],LV_OBJ_FLAG_HIDDEN))media_progress(t,w.parts[5],w.parts[6],w.media_bar_w);
       // The second hand moves on its own: only its line is redrawn, and it hides during standby. Only while the

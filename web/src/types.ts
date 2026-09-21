@@ -8,6 +8,9 @@ export type TileOptions = {
   background?: string;
   history_hours?: number;
   action?: { action: string; data?: Record<string, unknown> };
+  // The energy cards (SDS fork): the gauge's range and zones, the companions of a battery or power-flow card.
+  min?: number; max?: number; warn?: number; alarm?: number;
+  energy?: { power?: string; grid?: string; solar?: string; soc?: string; capacity?: number; flip?: boolean; flip_grid?: boolean };
   [key: string]: unknown;
 };
 export type Tile = { entity: string; name: string; slot: number; options?: TileOptions };

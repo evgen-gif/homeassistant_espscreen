@@ -51,7 +51,7 @@ BIG_BOARDS = frozenset({'guition', 'panel7', 'panel10'})
 # Boards whose orientation is fixed in the profile (a portrait matrix turned by LVGL): no Rotation setting.
 FIXED_ROTATION_BOARDS = frozenset({'panel10'})
 # Firmware shipped with this app release; screens below it get an update offer.
-FIRMWARE_VERSION = '0.2.176'
+FIRMWARE_VERSION = '0.2.177'
 # The Auto standby switch a screen offers Home Assistant automations.
 AUTO_STANDBY_MIN_FIRMWARE = '0.2.41'
 # The settings page the screen opens itself, and the screen.settings tile that opens it.
@@ -90,9 +90,16 @@ def backgrounds():
     return {name: {**item, 'label': t(f'addon.labels.backgrounds.{name}')} for name, item in TILE_BACKGROUNDS.items()}
 
 # Display modes per domain; everything else offers standard and watch (large value).
-DISPLAYS = {'weather': ('standard', 'watch', 'forecast', 'clock_weather'), 'sensor': ('standard', 'watch', 'graph'), 'screen': ('digital', 'analog'), 'sun': ('standard', 'watch', 'sunpath')}
+DISPLAYS = {'weather': ('standard', 'watch', 'forecast', 'clock_weather'), 'sensor': ('standard', 'watch', 'graph', 'gauge', 'battery', 'energy'), 'screen': ('digital', 'analog'), 'sun': ('standard', 'watch', 'sunpath')}
 # Displays that only work on a double-width card.
-WIDE_ONLY = ('forecast', 'clock_weather', 'sunpath')
+WIDE_ONLY = ('forecast', 'clock_weather', 'sunpath', 'energy')
+# The energy cards (SDS fork, 2026-09-21). A gauge takes a range and two zones as tile options (min, max, warn, alarm);
+# a battery and the power flow read companion entities named in the `energy` option: the battery's power, the grid's,
+# the solar power and the state of charge, plus the battery's capacity in kWh for the time it has left. Powers travel
+# to the screen positive towards the house (grid import, battery charging, solar in); `flip` says the battery sensor
+# counts discharging as positive (Sunsynk/Deye do), and `flip_grid` the same for export.
+ENERGY_ROLES = ('power', 'grid', 'solar', 'soc')
+ENERGY_NUMBERS = ('min', 'max', 'warn', 'alarm')
 
 # Grid positions: two columns, three rows per page, at most eight pages. A tile's
 # `slot` is its absolute cell (page * 6 + row * 2 + column); a wide tile starts in
@@ -514,7 +521,7 @@ TILE_RESULT_EVENT = 'esp_screens_tile_result'
 # pastel background.
 TILE_EVENT_OPTIONS = {'size': 'size', 'controls': 'controls', 'display': 'display', 'icon': 'icon',
                       'color': 'background', 'background': 'background', 'tap': 'tap', 'inline': 'inline',
-                      'history_hours': 'history_hours'}
+                      'history_hours': 'history_hours', 'min': 'min', 'max': 'max', 'warn': 'warn', 'alarm': 'alarm'}
 TILE_SIZES = {'full': 'full', 'fullscreen': 'full', 'full screen': 'full', 'full-screen': 'full', 'page': 'full', 'whole page': 'full',
               'wide': 'wide', 'double': 'wide', 'large': 'wide', 'big': 'wide',
               'single': 'single', 'small': 'single', 'normal': 'single'}
@@ -597,10 +604,26 @@ def tile_options(data, current=None):
         value = data[key]
         if name == 'history_hours':
             options[name] = int(value) if str(value).isdigit() else value
+        elif name in ENERGY_NUMBERS:
+            # A gauge's numbers as an automation types them ("80", "70.5"); words stay for the validation to refuse.
+            try:
+                number = float(str(value).replace(',', '.'))
+                options[name] = int(number) if number == int(number) else number
+            except ValueError:
+                options[name] = str(value).strip()
         elif name == 'size':
             options[name] = TILE_SIZES.get(loose(value), str(value))
         else:
             options[name] = str(value).strip()
+    # The energy cards' companions (SDS fork): `energy` as a dict, or its keys flat (power, grid, solar, soc, capacity, flip).
+    energy = dict(options.get('energy') or {})
+    if isinstance(data.get('energy'), dict):
+        energy.update(data['energy'])
+    for key in (*ENERGY_ROLES, 'capacity', 'flip', 'flip_grid'):
+        if data.get(key) not in (None, ''):
+            energy[key] = data[key]
+    if energy:
+        options['energy'] = energy
     # Perform action (app 0.2.67): `action` names Home Assistant's action and `data` its fields; the tap follows.
     if data.get('action') not in (None, ''):
         options['action'] = {'action': str(data['action']).strip(), **({'data': data['data']} if isinstance(data.get('data'), dict) and data['data'] else {})}
@@ -869,6 +892,54 @@ def validate_tap_action(value):
         raise ValueError(t('addon.errors.tap_action.too_long'))
     return clean
 
+def validate_energy_options(options):
+    """The energy cards' settings (SDS fork): the gauge's numbers as floats, the companions as entity ids of the domains
+    a screen shows, the capacity a positive number of kWh, the flips booleans; anything empty is dropped."""
+    clean = dict(options)
+    for key in ENERGY_NUMBERS:
+        if key not in clean:
+            continue
+        value = clean[key]
+        if value in (None, ''):
+            del clean[key]
+            continue
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            raise ValueError(t('addon.errors.layout.invalid_setting', setting=key))
+        if not math.isfinite(number) or abs(number) > 1e9:
+            raise ValueError(t('addon.errors.layout.invalid_setting', setting=key))
+        clean[key] = int(number) if number == int(number) else round(number, 3)
+    if 'energy' in clean:
+        energy = clean['energy']
+        if not isinstance(energy, dict) or set(energy) - {*ENERGY_ROLES, 'capacity', 'flip', 'flip_grid'}:
+            raise ValueError(t('addon.errors.layout.invalid_setting', setting='energy'))
+        kept = {}
+        for role in ENERGY_ROLES:
+            value = energy.get(role)
+            if value in (None, ''):
+                continue
+            if not isinstance(value, str) or not entity_id(value) or value.split('.')[0] not in ('sensor', 'number', 'input_number'):
+                raise ValueError(t('addon.errors.layout.invalid_setting', setting=role))
+            kept[role] = value
+        capacity = energy.get('capacity')
+        if capacity not in (None, ''):
+            try:
+                capacity = float(capacity)
+            except (TypeError, ValueError):
+                raise ValueError(t('addon.errors.layout.invalid_setting', setting='capacity'))
+            if not math.isfinite(capacity) or not 0 < capacity <= 10000:
+                raise ValueError(t('addon.errors.layout.invalid_setting', setting='capacity'))
+            kept['capacity'] = round(capacity, 3)
+        for flag in ('flip', 'flip_grid'):
+            if energy.get(flag) in (True, 1, 'true', 'on', 'yes'):
+                kept[flag] = True
+        if kept:
+            clean['energy'] = kept
+        else:
+            del clean['energy']
+    return clean
+
 def validate_layout(data, stored=False):
     """A layout as the editor, a tile event or the storage gives it. `stored`: loaded from the app's own data, where a
     tile setting this version doesn't know (saved by a newer app) stays as it is instead of stopping the app."""
@@ -901,8 +972,9 @@ def validate_layout(data, stored=False):
                 continue
         if 'options' in tile:
             options = tile['options']
-            if not isinstance(options, dict) or set(options) - {'tap', 'display', 'inline', 'history_hours', 'background', 'size', 'icon', 'controls', 'action'}:
+            if not isinstance(options, dict) or set(options) - {'tap', 'display', 'inline', 'history_hours', 'background', 'size', 'icon', 'controls', 'action', 'energy', *ENERGY_NUMBERS}:
                 raise ValueError(t('addon.errors.layout.unknown_settings'))
+            options = validate_energy_options(options)
             # A navigation tile (screen.page_<n>, firmware 0.2.62+) has a name, an icon, a colour and a width; never the page.
             if page_target(tile['entity']):
                 if options.get('size') == 'full':
@@ -1167,6 +1239,58 @@ def media_extras(attrs):
     return result or None
 
 
+def energy_related(tile):
+    """The companion entities of a battery or power-flow tile (SDS fork), in the order of ENERGY_ROLES."""
+    if tile.get('options', {}).get('display') not in ('battery', 'energy'):
+        return ()
+    energy = tile.get('options', {}).get('energy') or {}
+    return tuple(energy[role] for role in ENERGY_ROLES if isinstance(energy.get(role), str))
+
+def energy_number(states, entity):
+    """A companion's state as a float, NaN when it has none; a kW sensor comes back in W."""
+    state = states.get(entity or '', {})
+    try:
+        value = float(state.get('state'))
+    except (TypeError, ValueError):
+        return math.nan
+    if not math.isfinite(value):
+        return math.nan
+    unit = str(state.get('attributes', {}).get('unit_of_measurement') or '')
+    return value * 1000 if unit.lower() == 'kw' else value
+
+def energy_extras(tile, states):
+    """What the screen draws on a battery or power-flow card (SDS fork): {"e": {g, b, p, s, m}} in watts positive towards
+    the house, the charge in percent and the minutes the battery has left at this rate (from the capacity option)."""
+    energy = tile.get('options', {}).get('energy') or {}
+    e = {}
+    bat = energy_number(states, energy.get('power'))
+    if math.isfinite(bat):
+        if energy.get('flip'):
+            bat = -bat
+        e['b'] = round(bat)
+    grid = energy_number(states, energy.get('grid'))
+    if math.isfinite(grid):
+        if energy.get('flip_grid'):
+            grid = -grid
+        e['g'] = round(grid)
+    solar = energy_number(states, energy.get('solar'))
+    if math.isfinite(solar):
+        e['p'] = round(max(0.0, solar))
+    # The state of charge: the companion, or the tile's own sensor on a battery card.
+    soc = energy_number(states, energy.get('soc')) if energy.get('soc') else math.nan
+    if not math.isfinite(soc) and tile.get('options', {}).get('display') == 'battery':
+        soc = energy_number(states, tile['entity'])
+    if math.isfinite(soc):
+        soc = round(max(0.0, min(100.0, soc)), 1)
+        e['s'] = int(soc) if soc == int(soc) else soc
+    capacity = energy.get('capacity')
+    if isinstance(capacity, (int, float)) and capacity > 0 and math.isfinite(bat) and math.isfinite(soc) and abs(bat) >= 10:
+        share = (100 - soc) if bat > 0 else soc
+        hours = share / 100 * capacity * 1000 / abs(bat)
+        if hours < 24 * 30:
+            e['m'] = int(round(hours * 60))
+    return {'e': e} if e else {}
+
 def extras(tile, states, forecast=None, tz=None, hourly=None, now=None, device=None, entries=None, words=None, icon_of=None, device_name=None):
     """Small, pre-computed values the firmware cannot derive itself (time zones, forecasts, a vacuum's device, the rows of
     a light's effects page)."""
@@ -1226,6 +1350,8 @@ def extras(tile, states, forecast=None, tz=None, hourly=None, now=None, device=N
         # an image entity (when its picture last changed).
         last = epoch(attrs.get('last_triggered') if domain == 'script' else states.get(tile['entity'], {}).get('state'))
         return {'last': last} if last else None
+    if domain == 'sensor' and tile.get('options', {}).get('display') in ('battery', 'energy'):
+        return energy_extras(tile, states) or None
     if domain == 'sun':
         rise, down = local_clock(attrs.get('next_rising'), tz), local_clock(attrs.get('next_setting'), tz)
         return {'rise': rise, 'set': down} if rise or down else None
@@ -1253,7 +1379,7 @@ def tile_icon(tile, attrs, state=None, entry=None):
 def screen_options(tile, attrs, state=None, entry=None):
     """Stored options on the wire; `icon` travels as the resolved codepoint (firmware 0.2.18+, ignored before)
     and `controls` only as the set the card really shows (firmware 0.2.19+, ignored before)."""
-    options = {k: v for k, v in tile.get('options', {}).items() if k not in ('icon', 'controls', 'action')}
+    options = {k: v for k, v in tile.get('options', {}).items() if k not in ('icon', 'controls', 'action', 'energy')}
     icon = tile_icon(tile, attrs, state, entry)
     if icon:
         options['icon'] = icon

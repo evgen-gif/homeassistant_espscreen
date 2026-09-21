@@ -283,6 +283,18 @@ constexpr uint16_t ha_climate_swing_off = 318;
 constexpr uint16_t ha_climate_swing_both = 319;
 constexpr uint16_t ha_climate_swing_vertical = 320;
 constexpr uint16_t ha_climate_swing_horizontal = 321;
+constexpr uint16_t energy_grid = 322;
+constexpr uint16_t energy_home = 323;
+constexpr uint16_t energy_battery = 324;
+constexpr uint16_t energy_solar = 325;
+constexpr uint16_t energy_charging = 326;
+constexpr uint16_t energy_discharging = 327;
+constexpr uint16_t energy_idle = 328;
+constexpr uint16_t energy_import = 329;
+constexpr uint16_t energy_export = 330;
+constexpr uint16_t energy_to_full = 331;
+constexpr uint16_t energy_to_empty = 332;
+constexpr uint16_t energy_off_grid = 333;
 constexpr uint16_t date_weekdays = 18;
 constexpr uint16_t date_weekdays_count = 7;
 constexpr uint16_t date_weekdays_short = 25;
@@ -294,6 +306,6 @@ constexpr uint16_t date_months_count = 12;
 constexpr uint16_t date_months_short = 51;
 constexpr uint16_t date_months_short_count = 12;
 }  // namespace txt
-constexpr uint16_t KEY_COUNT = 322;
-constexpr uint32_t KEYS_HASH = 0x6D3912FFu;
+constexpr uint16_t KEY_COUNT = 334;
+constexpr uint32_t KEYS_HASH = 0xE0F38C55u;
 }  // namespace screen_text

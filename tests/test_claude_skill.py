@@ -81,11 +81,15 @@ class SkillText(unittest.TestCase):
     def test_every_yaml_example_parses(self):
         import yaml
         blocks = re.findall(r'```yaml\n(.*?)```', claude_skill.text(), re.S)
-        self.assertEqual(len(blocks), 10)
+        self.assertEqual(len(blocks), 11)
         parsed = [yaml.safe_load(block) for block in blocks]
         # Tiles first (0.2.51): putting one on a screen, and ordering a page.
         self.assertEqual(parsed[0]['actions'][0]['event'], 'esp_screens_add_tile')
         self.assertEqual(set(parsed[0]['actions'][0]['event_data']), {'screen', 'entity'})
+        # The energy cards' example (SDS fork): a power flow with its companions; the rest keep their places.
+        energy = parsed.pop(1)
+        self.assertEqual(energy['actions'][0]['event'], 'esp_screens_add_tile')
+        self.assertEqual(energy['actions'][0]['event_data']['display'], 'energy')
         self.assertEqual(parsed[1]['actions'][0]['event'], 'esp_screens_order_tiles')
         self.assertEqual(set(parsed[1]['actions'][0]['event_data']), {'screen', 'page', 'entities'})
         self.assertEqual(parsed[2]['actions'][0]['event'], BROADCAST_SHOW)

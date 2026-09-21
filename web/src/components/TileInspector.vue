@@ -50,6 +50,8 @@ const displays = computed(() => {
   // Clock & weather (SDS fork): the forecast card with the time and date at its left; the same forecast it needs.
   if (domain.value === "weather" && (!c || c.displays.includes("forecast") || display.value === "clock_weather")) keys.push("clock_weather");
   if (domain.value === "sensor" && (!c || c.displays.includes("graph") || display.value === "graph")) keys.push("graph");
+  // The energy cards (SDS fork): a gauge, a battery and the power flow of a hybrid inverter, on any numeric sensor.
+  if (domain.value === "sensor") keys.push("gauge", "battery", "energy");
   if (domain.value === "sun") keys.push("sunpath");
   return keys.map((key) => [key, t(`editor.tile.display.${key}`)] as [string, string]);
 });
@@ -91,9 +93,26 @@ const inline = computed(() => current("inline", "none") as string);
 const showSlider = computed(() => SLIDER_DOMAINS.includes(domain.value) && (!caps.value || caps.value.inline || inline.value === "slider"));
 const sliderWarn = computed(() => inline.value === "slider" && caps.value && !caps.value.inline);
 const history = computed(() => current("history_hours", 24) as number);
+// The energy cards' settings (SDS fork): the gauge's range and zones as tile options, the companions of a battery or
+// power-flow card in the `energy` option. The companions are numeric sensors of the inventory, by name.
+const energy = computed(() => (props.tile.options?.energy || {}) as Record<string, unknown>);
+const energyText = (key: string) => { const v = current(key, ""); return v === undefined || v === null ? "" : String(v); };
+const companions = computed(() => state.inventory.entities.filter((e) => e.id.startsWith("sensor.") && e.id !== props.tile.entity)
+  .map((e) => [e.id, e.name || e.id] as [string, string]).sort((a, b) => a[1].localeCompare(b[1])));
+const energyRoles = computed(() => display.value === "battery" ? ["power", "capacity"] : display.value === "energy" ? ["grid", "solar", "power", "soc"] : []);
+const energyHint = computed(() => !supports(0, 2, 177) ? t("editor.tile.energy.needs_firmware") : t(display.value === "battery" ? "editor.tile.energy.battery_hint" : "editor.tile.energy.energy_hint"));
+function setEnergy(key: string, value: unknown) {
+  const next: Record<string, unknown> = { ...energy.value };
+  if (value === "" || value === undefined || value === null || value === false) delete next[key]; else next[key] = value;
+  setTileOption(props.tile, "energy", Object.keys(next).length ? next : undefined);
+}
+function setNumber(key: string, value: string) {
+  const text = value.trim().replace(",", ".");
+  setTileOption(props.tile, key, text === "" ? undefined : Number(text));
+}
 const backgrounds = computed(() => Object.entries(state.inventory.backgrounds || {}));
 const fromHA = computed(() => Boolean(state.inventory.entities.find((e) => e.id === props.tile.entity)?.icon));
-const showIcon = computed(() => Boolean(state.inventory.icons) && (domain.value !== "screen" || goesTo.value > 0) && !["forecast", "clock_weather", "sunpath"].includes(display.value));
+const showIcon = computed(() => Boolean(state.inventory.icons) && (domain.value !== "screen" || goesTo.value > 0) && !["forecast", "clock_weather", "sunpath", "gauge", "battery", "energy"].includes(display.value));
 function rename(value: string) {
   props.tile.name = value;
   markDirty();
@@ -152,6 +171,28 @@ function inspect() {
       <span class="f-label">{{ t("editor.tile.slider.label") }}</span>
       <Segmented :choices="[['none', t('editor.tile.slider.no')], ['slider', t('editor.tile.slider.yes')]]" :value="inline" @pick="(v) => setTileOption(tile, 'inline', v)" />
       <small v-if="sliderWarn" class="warn">{{ t("editor.tile.slider.nothing") }}</small>
+    </div>
+    <div v-if="domain === 'sensor' && !goesTo && display === 'gauge'" class="f">
+      <span class="f-label">{{ t("editor.tile.energy.range") }}</span>
+      <div class="row4">
+        <label v-for="key in ['min', 'max', 'warn', 'alarm']" :key="key"><small>{{ t(`editor.tile.energy.${key}`) }}</small>
+          <input type="text" inputmode="decimal" :value="energyText(key)" @change="setNumber(key, ($event.target as HTMLInputElement).value)" /></label>
+      </div>
+      <small>{{ t("editor.tile.energy.range_hint") }}</small>
+    </div>
+    <div v-if="domain === 'sensor' && !goesTo && energyRoles.length" class="f">
+      <span class="f-label">{{ t("editor.tile.energy.label") }}</span>
+      <label v-for="role in energyRoles" :key="role" class="stack"><small>{{ t(`editor.tile.energy.${role}`) }}</small>
+        <input v-if="role === 'capacity'" type="text" inputmode="decimal" :value="energy.capacity === undefined ? '' : String(energy.capacity)"
+          @change="setEnergy('capacity', (($event.target as HTMLInputElement).value.trim().replace(',', '.') === '') ? undefined : Number(($event.target as HTMLInputElement).value.trim().replace(',', '.')))" />
+        <select v-else :value="String(energy[role] ?? '')" @change="setEnergy(role, ($event.target as HTMLSelectElement).value)">
+          <option value="">{{ t("editor.tile.energy.none") }}</option>
+          <option v-for="[id, label] in companions" :key="id" :value="id">{{ label }}</option>
+        </select>
+      </label>
+      <label v-if="energy.power" class="check"><input type="checkbox" :checked="Boolean(energy.flip)" @change="setEnergy('flip', ($event.target as HTMLInputElement).checked)" /> {{ t("editor.tile.energy.flip") }}</label>
+      <label v-if="energy.grid" class="check"><input type="checkbox" :checked="Boolean(energy.flip_grid)" @change="setEnergy('flip_grid', ($event.target as HTMLInputElement).checked)" /> {{ t("editor.tile.energy.flip_grid") }}</label>
+      <small>{{ energyHint }}</small>
     </div>
     <div v-if="domain === 'sensor' && !goesTo" class="f">
       <span class="f-label">{{ t("editor.tile.history.label") }}</span>
